@@ -36,43 +36,48 @@ export function useProvisioning(teamId?: string) {
 
   const runProvisioning = useCallback(() => {
     setIsRunning(true);
-    const pendingItems = items.filter((item) => item.status !== 'complete');
 
-    pendingItems.forEach((item, i) => {
-      setTimeout(() => {
-        setItems((prev) =>
-          prev.map((it) =>
-            it.id === item.id ? { ...it, status: 'in-progress' } : it
-          )
-        );
-      }, i * 400);
+    setItems((currentItems) => {
+      const pendingItems = currentItems.filter((item) => item.status !== 'complete');
 
-      setTimeout(() => {
-        setItems((prev) => {
-          const updated = prev.map((it) =>
-            it.id === item.id ? { ...it, status: 'complete' as const } : it
+      pendingItems.forEach((item, i) => {
+        setTimeout(() => {
+          setItems((prev) =>
+            prev.map((it) =>
+              it.id === item.id && it.status === 'pending' ? { ...it, status: 'in-progress' } : it
+            )
           );
+        }, i * 400);
 
-          // Persist to Firestore
-          if (teamId) {
-            const statusMap: Record<string, string> = {};
-            updated.forEach((it) => { statusMap[it.id] = it.status; });
-            const teamRef = doc(db, 'teams', teamId);
-            updateDoc(teamRef, { provisioningStatus: statusMap }).catch(() => {});
+        setTimeout(() => {
+          setItems((prev) => {
+            const updated = prev.map((it) =>
+              it.id === item.id ? { ...it, status: 'complete' as const } : it
+            );
+
+            // Persist to Firestore
+            if (teamId) {
+              const statusMap: Record<string, string> = {};
+              updated.forEach((it) => { statusMap[it.id] = it.status; });
+              const teamRef = doc(db, 'teams', teamId);
+              updateDoc(teamRef, { provisioningStatus: statusMap }).catch(() => {});
+            }
+
+            return updated;
+          });
+          if (i === pendingItems.length - 1) {
+            setTimeout(() => setIsRunning(false), 200);
           }
+        }, i * 400 + 300);
+      });
 
-          return updated;
-        });
-        if (i === pendingItems.length - 1) {
-          setTimeout(() => setIsRunning(false), 200);
-        }
-      }, i * 400 + 300);
+      if (pendingItems.length === 0) {
+        setIsRunning(false);
+      }
+
+      return currentItems;
     });
-
-    if (pendingItems.length === 0) {
-      setIsRunning(false);
-    }
-  }, [items, teamId]);
+  }, [teamId]);
 
   const allComplete = items.every((item) => item.status === 'complete');
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
-import { ThumbsUp, ThumbsDown, Users, Tag, Sparkles, ArrowRight, Plus } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Users, Tag, Sparkles, ArrowRight, Plus, AlertTriangle } from 'lucide-react';
 import { useMatching } from '@/lib/hooks/use-matching';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ export default function MatchPage() {
   const { questId } = useParams<{ questId: string }>();
   const router = useRouter();
   const {
-    cards, currentIndex, matched, matchedTeamId, swipe, isComplete, loading,
+    cards, currentIndex, matched, matchedTeamId, swipe, isComplete, loading, error,
   } = useMatching(questId);
   const [showMatch, setShowMatch] = useState(false);
 
@@ -31,20 +31,29 @@ export default function MatchPage() {
 
   const handleSwipe = async (direction: 'left' | 'right') => {
     await swipe(direction);
-    if (direction === 'right' && matched) {
-      setShowMatch(true);
-    }
   };
 
   // After swipe completes, check if we got a match
-  if (matched && !showMatch) {
-    setShowMatch(true);
-  }
+  useEffect(() => {
+    if (matched && !showMatch) setShowMatch(true);
+  }, [matched, showMatch]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <div className="text-cyan-400 animate-pulse">Loading projects...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
+        <AlertTriangle size={32} className="text-red-400" />
+        <p className="text-red-400">{error}</p>
+        <ArcadeButton variant="cyan" onClick={() => window.location.reload()}>
+          Try Again
+        </ArcadeButton>
       </div>
     );
   }

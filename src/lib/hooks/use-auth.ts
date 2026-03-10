@@ -12,6 +12,7 @@ interface AuthContextValue {
   user: FirebaseUser | null;
   profile: UserProfile | null;
   loading: boolean;
+  error: string | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   profile: null,
   loading: true,
+  error: null,
   signIn: async () => {},
   signOut: async () => {},
 });
@@ -28,26 +30,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     return onAuthStateChanged(async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
         const userRef = doc(db, 'users', firebaseUser.uid);
+        const newProfile: Omit<UserProfile, 'id'> = {
+          uid: firebaseUser.uid,
+          displayName: firebaseUser.displayName ?? '',
+          email: firebaseUser.email ?? '',
+          photoURL: firebaseUser.photoURL ?? '',
+          role: 'hacker',
+        };
+        await setDoc(userRef, newProfile, { merge: true });
         const snap = await getDoc(userRef);
-        if (snap.exists()) {
-          setProfile({ id: snap.id, ...snap.data() } as UserProfile);
-        } else {
-          const newProfile: Omit<UserProfile, 'id'> = {
-            uid: firebaseUser.uid,
-            displayName: firebaseUser.displayName ?? '',
-            email: firebaseUser.email ?? '',
-            photoURL: firebaseUser.photoURL ?? '',
-            role: 'hacker',
-          };
-          await setDoc(userRef, newProfile);
-          setProfile({ id: firebaseUser.uid, ...newProfile });
-        }
+        setProfile({ id: snap.id, ...snap.data() } as UserProfile);
       } else {
         setProfile(null);
       }
@@ -56,7 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleSignIn = useCallback(async () => {
-    await signInWithGoogle();
+    setError(null);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sign-in failed. Please try again.';
+      if (!message.includes('popup-closed-by-user')) {
+        setError(message);
+      }
+    }
   }, []);
 
   const handleSignOut = useCallback(async () => {
@@ -66,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return React.createElement(
     AuthContext.Provider,
-    { value: { user, profile, loading, signIn: handleSignIn, signOut: handleSignOut } },
+    { value: { user, profile, loading, error, signIn: handleSignIn, signOut: handleSignOut } },
     children
   );
 }

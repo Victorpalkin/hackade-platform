@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import {
-  query, where, getDocs, addDoc, doc, setDoc, serverTimestamp, onSnapshot,
+  query, where, getDocs, addDoc, doc, setDoc, onSnapshot,
 } from 'firebase/firestore';
 import { ProjectCard, SwipeRecord, Team } from '../types';
 import { projectsCollection, swipesCollection, teamsCollection } from '../firebase/collections';
@@ -18,6 +18,7 @@ export function useMatching(questId?: string) {
   const [matchedTeamId, setMatchedTeamId] = useState<string | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!questId || !user) {
@@ -56,6 +57,7 @@ export function useMatching(questId?: string) {
       if (!card || !user) return;
 
       setSwipeDirection(direction);
+      setError(null);
 
       // Record the swipe in Firestore
       const swipeKey = [user.uid, card.createdBy].sort().join('_');
@@ -68,54 +70,47 @@ export function useMatching(questId?: string) {
         } satisfies Omit<SwipeRecord, 'id'>);
 
         if (direction === 'right') {
-          // Check for mutual match: did the project creator swipe right on any of our projects?
-          const reverseSwipesQ = query(
-            swipesCollection,
-            where('swiperId', '==', card.createdBy),
-            where('direction', '==', 'right')
-          );
-          const reverseSnap = await getDocs(reverseSwipesQ);
-          const theySwipedOnOurs = reverseSnap.docs.some(
-            (d) => d.data().swiperId === card.createdBy
-          );
+          // MVP: every right-swipe is treated as a match
+          setMatched(card);
 
-          // For MVP, any right-swipe is treated as a match (simpler UX)
-          if (true || theySwipedOnOurs) {
-            setMatched(card);
-            // Create a team
-            const teamData: Omit<Team, 'id'> = {
-              questId: questId || '',
-              projectId: card.id,
-              projectTitle: card.title,
-              members: [
-                {
-                  id: user.uid,
-                  name: user.displayName || 'You',
-                  role: '',
-                  avatar: user.photoURL?.charAt(0) || 'Y',
-                  skills: [],
-                  claimed: false,
-                  uid: user.uid,
-                },
-                {
-                  id: card.founder.uid || card.createdBy,
-                  name: card.founder.name,
-                  role: '',
-                  avatar: card.founder.avatar,
-                  skills: [],
-                  claimed: false,
-                  uid: card.founder.uid || card.createdBy,
-                },
-              ],
-              provisioningStatus: {},
-              createdAt: Date.now(),
-            };
-            const teamRef = await addDoc(teamsCollection, teamData);
-            setMatchedTeamId(teamRef.id);
-          }
+          // Assign roles from the project's lookingFor array
+          const userRole = card.lookingFor[0] || 'Developer';
+          const founderRole = card.lookingFor[1] || 'Project Lead';
+          const memberUids = [user.uid, card.founder.uid || card.createdBy];
+
+          const teamData: Omit<Team, 'id'> = {
+            questId: questId || '',
+            projectId: card.id,
+            projectTitle: card.title,
+            memberUids,
+            members: [
+              {
+                id: user.uid,
+                name: user.displayName || 'You',
+                role: userRole,
+                avatar: user.displayName?.charAt(0).toUpperCase() || 'Y',
+                skills: [],
+                claimed: false,
+                uid: user.uid,
+              },
+              {
+                id: card.founder.uid || card.createdBy,
+                name: card.founder.name,
+                role: founderRole,
+                avatar: card.founder.avatar,
+                skills: [],
+                claimed: false,
+                uid: card.founder.uid || card.createdBy,
+              },
+            ],
+            provisioningStatus: {},
+            createdAt: Date.now(),
+          };
+          const teamRef = await addDoc(teamsCollection, teamData);
+          setMatchedTeamId(teamRef.id);
         }
-      } catch {
-        // Silently handle errors for now
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to record swipe. Please try again.');
       }
 
       setTimeout(() => {
@@ -157,5 +152,6 @@ export function useMatching(questId?: string) {
     clearMatch: () => setMatched(null),
     isComplete: currentIndex >= cards.length,
     loading,
+    error,
   };
 }

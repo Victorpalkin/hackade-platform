@@ -1,21 +1,31 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Gamepad2 } from 'lucide-react';
+import { Gamepad2, Loader2 } from 'lucide-react';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { useAuth } from '@/lib/hooks/use-auth';
 
 export default function LoginPage() {
-  const { user, loading, signIn } = useAuth();
+  const { user, loading, signIn, error: authError } = useAuth();
   const router = useRouter();
+  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
       router.push('/quests');
     }
   }, [user, loading, router]);
+
+  const handleSignIn = async () => {
+    setSigningIn(true);
+    try {
+      await signIn();
+    } finally {
+      setSigningIn(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -44,9 +54,23 @@ export default function LoginPage() {
         <h1 className="text-5xl font-black glow-text-cyan mb-4">HACKADE</h1>
         <p className="text-gray-400 text-lg mb-10">The Gamified Hackathon Platform</p>
 
-        <ArcadeButton variant="cyan" size="lg" pulse onClick={signIn}>
-          Sign in with Google
+        <ArcadeButton variant="cyan" size="lg" pulse onClick={handleSignIn} disabled={signingIn}>
+          {signingIn ? (
+            <><Loader2 size={18} className="inline mr-2 animate-spin" />Signing in...</>
+          ) : (
+            'Sign in with Google'
+          )}
         </ArcadeButton>
+
+        {authError && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-sm text-red-400 mt-4"
+          >
+            {authError}
+          </motion.p>
+        )}
 
         <motion.p
           initial={{ opacity: 0 }}

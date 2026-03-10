@@ -3,11 +3,13 @@
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { MessageSquare, Video, FileCode2, Figma, Key, LayoutDashboard } from 'lucide-react';
+import { MessageSquare, Video, FileCode2, Figma, Key, LayoutDashboard, Menu, X } from 'lucide-react';
 import { ProgressChecklist } from '@/components/ui/ProgressChecklist';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { useProvisioning } from '@/lib/hooks/use-provisioning';
 import { useTeam } from '@/lib/hooks/use-team';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client';
 
 export default function WarRoomPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -15,6 +17,8 @@ export default function WarRoomPage() {
   const { team, loading: teamLoading } = useTeam(teamId);
   const { items, allComplete, runProvisioning } = useProvisioning(teamId);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [questTitle, setQuestTitle] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => runProvisioning(), 500);
@@ -29,15 +33,36 @@ export default function WarRoomPage() {
     }
   }, [allComplete]);
 
+  // Fetch quest title
+  useEffect(() => {
+    if (!team?.questId) return;
+    getDoc(doc(db, 'quests', team.questId)).then((snap) => {
+      if (snap.exists()) {
+        setQuestTitle((snap.data() as { title?: string }).title || team.questId);
+      }
+    }).catch(() => {});
+  }, [team?.questId]);
+
   const projectTitle = team?.projectTitle || 'Your Project';
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] grid-bg">
+      {/* Mobile sidebar toggle */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="fixed top-16 left-2 z-50 md:hidden w-10 h-10 rounded-lg glass border border-white/10 flex items-center justify-center cursor-pointer"
+        aria-label="Toggle sidebar"
+      >
+        {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+      </button>
+
       {/* Sidebar */}
       <motion.div
         initial={{ x: -280 }}
         animate={{ x: 0 }}
-        className="w-64 glass border-r border-white/10 p-4 flex flex-col"
+        className={`w-64 glass border-r border-white/10 p-4 flex flex-col fixed md:static inset-y-14 left-0 z-40 transition-transform ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
       >
         <div className="flex items-center gap-2 mb-6">
           <LayoutDashboard size={20} className="text-cyan-400" />
@@ -71,7 +96,7 @@ export default function WarRoomPage() {
           className="mb-6"
         >
           <h1 className="text-2xl font-bold mb-1">{projectTitle}</h1>
-          <p className="text-gray-400 text-sm">{team?.questId ? `Quest: ${team.questId}` : ''}</p>
+          <p className="text-gray-400 text-sm">{team?.questId ? `Quest: ${questTitle || team.questId}` : ''}</p>
         </motion.div>
 
         {showDashboard ? (

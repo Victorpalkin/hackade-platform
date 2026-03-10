@@ -131,7 +131,7 @@ export function CreateProjectForm({ onSubmit }: CreateProjectFormProps) {
           </div>
         </div>
 
-        <ArcadeButton variant="green" size="lg" className="w-full" disabled={submitting || !title.trim() || !description.trim()}>
+        <ArcadeButton variant="green" size="lg" type="submit" className="w-full" disabled={submitting || !title.trim() || !description.trim()}>
           {submitting ? 'Creating...' : 'Create Project'}
         </ArcadeButton>
       </GlowCard>

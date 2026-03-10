@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase/client';
 import { TeamMember, Team } from '../types';
 import { useAuth } from './use-auth';
@@ -51,14 +51,23 @@ export function useTeam(teamId?: string) {
       }
 
       const teamRef = doc(db, 'teams', teamId);
-      const updatedMembers = members.map((m) =>
-        m.id === memberId
-          ? { ...m, claimed: true, uid: user.uid, name: user.displayName || m.name, role: role || m.role }
-          : m
-      );
-      await updateDoc(teamRef, { members: updatedMembers });
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(teamRef);
+        if (!snap.exists()) throw new Error('Team not found');
+        const data = snap.data() as Omit<Team, 'id'>;
+        const target = data.members.find((m) => m.id === memberId);
+        if (target?.claimed) throw new Error('Role already claimed');
+
+        const updatedMembers = data.members.map((m) =>
+          m.id === memberId
+            ? { ...m, claimed: true, uid: user.uid, name: user.displayName || m.name, role: role || m.role }
+            : m
+        );
+        const updatedUids = [...new Set(updatedMembers.filter((m) => m.uid).map((m) => m.uid!))];
+        transaction.update(teamRef, { members: updatedMembers, memberUids: updatedUids });
+      });
     },
-    [teamId, user, members]
+    [teamId, user]
   );
 
   const autoFillRemaining = useCallback(() => {

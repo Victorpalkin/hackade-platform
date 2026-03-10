@@ -27,9 +27,9 @@ service cloud.firestore {
 
     match /teams/{teamId} {
       allow read: if request.auth != null
-        && request.auth.uid in resource.data.members.map(m, m.uid);
+        && request.auth.uid in resource.data.memberUids;
       allow update: if request.auth != null
-        && request.auth.uid in resource.data.members.map(m, m.uid);
+        && request.auth.uid in resource.data.memberUids;
       allow create: if request.auth != null;
     }
   }

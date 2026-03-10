@@ -15,4 +15,3 @@ const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseCon
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
 
-export const isFirebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY;

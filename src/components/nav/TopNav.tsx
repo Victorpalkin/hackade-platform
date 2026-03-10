@@ -7,6 +7,7 @@ import { UserMenu } from '@/components/auth/UserMenu';
 
 const navLinks = [
   { href: '/quests', label: 'Quests', icon: Map },
+  { href: '/teams', label: 'My Teams', icon: Users },
 ];
 
 export function TopNav() {

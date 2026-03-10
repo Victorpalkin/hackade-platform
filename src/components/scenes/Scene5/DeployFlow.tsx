@@ -2,16 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Rocket, Globe, Video, FileText, ExternalLink, Check, Loader2, Upload } from 'lucide-react';
+import { Rocket, Globe, Video, FileText, ExternalLink, Check, Loader2, Upload, ArrowRight } from 'lucide-react';
 import ReactConfetti from 'react-confetti';
+import Link from 'next/link';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { TypingEffect } from '@/components/ui/TypingEffect';
 import { mockSubmission } from '@/lib/mock-data';
+import type { Submission } from '@/lib/types';
 
 type Phase = 'deploy' | 'deploying' | 'deployed' | 'record' | 'recording' | 'submit' | 'scanning' | 'submitted';
 
-export function DeployFlow() {
+interface DeployFlowProps {
+  submission?: Submission;
+}
+
+export function DeployFlow({ submission }: DeployFlowProps) {
+  const data = submission || mockSubmission;
   const [phase, setPhase] = useState<Phase>('deploy');
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
@@ -98,7 +105,7 @@ export function DeployFlow() {
             <h2 className="text-3xl font-bold glow-text-green mb-2">DEPLOYED!</h2>
             <div className="glass rounded-lg p-4 mb-8 inline-flex items-center gap-2">
               <Globe size={16} className="text-cyan-400" />
-              <span className="font-mono text-cyan-300 text-sm">{mockSubmission.url}</span>
+              <span className="font-mono text-cyan-300 text-sm">{data.url}</span>
               <ExternalLink size={14} className="text-gray-500" />
             </div>
             <br />
@@ -192,19 +199,19 @@ export function DeployFlow() {
                   <FileText size={20} className="text-yellow-400" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">{mockSubmission.projectName}</h2>
+                  <h2 className="text-2xl font-bold">{data.projectName}</h2>
                   <p className="text-sm text-gray-500">Hackade Submission</p>
                 </div>
               </div>
 
-              <p className="text-gray-300 mb-4">{mockSubmission.description}</p>
+              <p className="text-gray-300 mb-4">{data.description}</p>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="glass rounded-lg p-3">
                   <p className="text-xs text-gray-500 mb-1">Live Demo</p>
                   <div className="flex items-center gap-2 text-cyan-400 text-sm">
                     <Globe size={14} />
-                    <span className="font-mono">{mockSubmission.url}</span>
+                    <span className="font-mono">{data.url}</span>
                   </div>
                 </div>
                 <div className="glass rounded-lg p-3">
@@ -219,7 +226,7 @@ export function DeployFlow() {
               <div className="mb-4">
                 <p className="text-xs text-gray-500 mb-2">Sponsor Tracks</p>
                 <div className="flex gap-2">
-                  {mockSubmission.tracks.map((track) => (
+                  {data.tracks.map((track) => (
                     <span key={track} className="text-xs px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
                       {track}
                     </span>
@@ -230,7 +237,7 @@ export function DeployFlow() {
               <div>
                 <p className="text-xs text-gray-500 mb-2">Team</p>
                 <div className="flex gap-2">
-                  {mockSubmission.teamMembers.map((member) => (
+                  {data.teamMembers.map((member) => (
                     <span key={member} className="text-xs px-3 py-1 rounded-full bg-white/5 text-gray-300">
                       {member}
                     </span>
@@ -239,14 +246,28 @@ export function DeployFlow() {
               </div>
             </GlowCard>
 
-            <motion.p
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
-              className="text-center mt-6 text-emerald-400 font-bold text-lg glow-text-green"
+              className="text-center mt-6"
             >
-              Submission Complete! Good luck!
-            </motion.p>
+              <p className="text-emerald-400 font-bold text-lg glow-text-green mb-4">
+                Submission Complete! Good luck!
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Link href="/quests">
+                  <ArcadeButton variant="cyan">
+                    Back to Quests
+                  </ArcadeButton>
+                </Link>
+                <Link href="/teams">
+                  <ArcadeButton variant="magenta">
+                    View My Teams <ArrowRight size={14} className="inline ml-1" />
+                  </ArcadeButton>
+                </Link>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

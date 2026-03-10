@@ -11,6 +11,7 @@ interface ArcadeButtonProps {
   pulse?: boolean;
   disabled?: boolean;
   className?: string;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 const variantStyles = {
@@ -35,9 +36,11 @@ export function ArcadeButton({
   pulse = false,
   disabled = false,
   className = '',
+  type,
 }: ArcadeButtonProps) {
   return (
     <motion.button
+      type={type}
       onClick={onClick}
       disabled={disabled}
       className={`

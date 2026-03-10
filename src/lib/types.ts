@@ -49,6 +49,7 @@ export interface Team {
   projectId: string;
   projectTitle: string;
   members: TeamMember[];
+  memberUids: string[];
   provisioningStatus: Record<string, 'pending' | 'in-progress' | 'complete'>;
   createdAt: number;
 }
