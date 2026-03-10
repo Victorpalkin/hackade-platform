@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import React, { useEffect, useState, useCallback } from 'react';
+import { query, where, orderBy, limit, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { helpRequestsCollection } from '@/lib/firebase/collections';
 import { db } from '@/lib/firebase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
@@ -11,7 +11,7 @@ import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import type { HelpRequest } from '@/lib/types';
 
-const statusIcons = {
+const statusIcons: Record<HelpRequest['status'], React.ReactNode> = {
   pending: <Clock size={16} className="text-yellow-400" />,
   claimed: <AlertTriangle size={16} className="text-cyan-400" />,
   resolved: <CheckCircle size={16} className="text-emerald-400" />,
@@ -29,7 +29,12 @@ export default function MentorPage() {
       return;
     }
 
-    const q = query(helpRequestsCollection, orderBy('createdAt', 'desc'));
+    const q = query(
+      helpRequestsCollection,
+      where('status', 'in', ['pending', 'claimed']),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
     const unsubscribe = onSnapshot(
       q,
       (snap) => {

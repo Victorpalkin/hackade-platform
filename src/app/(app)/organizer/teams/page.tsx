@@ -7,7 +7,7 @@ import { GlowCard } from '@/components/ui/GlowCard';
 import { Users } from 'lucide-react';
 import type { Team } from '@/lib/types';
 
-const phaseColors: Record<string, string> = {
+const phaseColors: Record<Team['phase'], string> = {
   forming: 'text-yellow-400 bg-yellow-500/10',
   provisioning: 'text-cyan-400 bg-cyan-500/10',
   building: 'text-emerald-400 bg-emerald-500/10',

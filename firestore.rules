@@ -47,15 +47,11 @@ service cloud.firestore {
       allow update: if isAuth()
         && request.auth.uid in resource.data.memberUids;
       allow create: if isAuth();
-      // Organizers can read all teams
-      allow read: if isOrganizer();
     }
 
     match /submissions/{submissionId} {
       allow create: if isAuth();
       allow read: if isAuth();
-      // Organizers can read all submissions
-      allow read: if isOrganizer();
     }
 
     match /notifications/{notificationId} {

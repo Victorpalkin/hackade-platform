@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getDocs } from 'firebase/firestore';
+import { getCountFromServer } from 'firebase/firestore';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { questsCollection, teamsCollection, submissionsCollection, usersCollection } from '@/lib/firebase/collections';
 import { Users, Map, FileText, Gamepad2 } from 'lucide-react';
@@ -19,17 +19,17 @@ export default function OrganizerDashboard() {
 
   useEffect(() => {
     Promise.all([
-      getDocs(usersCollection),
-      getDocs(teamsCollection),
-      getDocs(questsCollection),
-      getDocs(submissionsCollection),
+      getCountFromServer(usersCollection),
+      getCountFromServer(teamsCollection),
+      getCountFromServer(questsCollection),
+      getCountFromServer(submissionsCollection),
     ])
       .then(([usersSnap, teamsSnap, questsSnap, subsSnap]) => {
         setStats({
-          hackers: usersSnap.size,
-          teams: teamsSnap.size,
-          quests: questsSnap.size,
-          submissions: subsSnap.size,
+          hackers: usersSnap.data().count,
+          teams: teamsSnap.data().count,
+          quests: questsSnap.data().count,
+          submissions: subsSnap.data().count,
         });
       })
       .catch(() => {})
