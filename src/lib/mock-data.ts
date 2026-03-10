@@ -41,6 +41,8 @@ export const projectCards: ProjectCard[] = [
     lookingFor: ['Backend Dev', 'Designer'],
     tags: ['React', 'Charts'],
     founder: { name: 'Bob', avatar: 'B' },
+    questId: 'q1',
+    createdBy: 'seed-user-bob',
   },
   {
     id: 'p2',
@@ -49,6 +51,8 @@ export const projectCards: ProjectCard[] = [
     lookingFor: ['ML Engineer', 'React Dev'],
     tags: ['AI/ML', 'Gemini', 'Fun'],
     founder: { name: 'Alice', avatar: 'A' },
+    questId: 'q1',
+    createdBy: 'seed-user-alice',
   },
 ];
 

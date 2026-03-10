@@ -1,3 +1,12 @@
+export interface UserProfile {
+  id: string;
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL: string;
+  role: 'hacker' | 'organizer';
+}
+
 export interface Quest {
   id: string;
   title: string;
@@ -18,7 +27,10 @@ export interface ProjectCard {
   founder: {
     name: string;
     avatar: string;
+    uid?: string;
   };
+  questId: string;
+  createdBy: string;
 }
 
 export interface TeamMember {
@@ -28,6 +40,25 @@ export interface TeamMember {
   avatar: string;
   skills: string[];
   claimed?: boolean;
+  uid?: string;
+}
+
+export interface Team {
+  id: string;
+  questId: string;
+  projectId: string;
+  projectTitle: string;
+  members: TeamMember[];
+  provisioningStatus: Record<string, 'pending' | 'in-progress' | 'complete'>;
+  createdAt: number;
+}
+
+export interface SwipeRecord {
+  id: string;
+  swiperId: string;
+  projectId: string;
+  direction: 'left' | 'right';
+  timestamp: number;
 }
 
 export interface ProvisioningItem {
