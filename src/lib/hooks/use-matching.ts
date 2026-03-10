@@ -4,8 +4,8 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   query, where, getDocs, addDoc, doc, setDoc, onSnapshot,
 } from 'firebase/firestore';
-import { ProjectCard, SwipeRecord, Team } from '../types';
-import { projectsCollection, swipesCollection, teamsCollection } from '../firebase/collections';
+import { ProjectCard, SwipeRecord, Team, Notification } from '../types';
+import { projectsCollection, swipesCollection, teamsCollection, notificationsCollection } from '../firebase/collections';
 import { db } from '../firebase/client';
 import { useAuth } from './use-auth';
 import { projectCards as mockCards } from '../mock-data';
@@ -104,10 +104,25 @@ export function useMatching(questId?: string) {
               },
             ],
             provisioningStatus: {},
+            phase: 'forming',
             createdAt: Date.now(),
           };
           const teamRef = await addDoc(teamsCollection, teamData);
           setMatchedTeamId(teamRef.id);
+
+          // Notify the project founder about the match
+          const founderId = card.founder.uid || card.createdBy;
+          if (founderId && founderId !== user.uid) {
+            const notification: Omit<Notification, 'id'> = {
+              userId: founderId,
+              type: 'match',
+              message: `${user.displayName || 'Someone'} matched with your project "${card.title}"`,
+              link: `/teams/${teamRef.id}`,
+              read: false,
+              createdAt: Date.now(),
+            };
+            await addDoc(notificationsCollection, notification).catch(() => {});
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to record swipe. Please try again.');

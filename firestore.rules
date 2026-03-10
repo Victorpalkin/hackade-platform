@@ -2,35 +2,79 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    function isAuth() {
+      return request.auth != null;
     }
 
-    match /quests/{questId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
+    function isOrganizer() {
+      return isAuth()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'organizer';
     }
 
+    function isMentorOrOrganizer() {
+      return isAuth()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['mentor', 'organizer'];
+    }
+
+    match /users/{uid} {
+      allow read, write: if isAuth() && request.auth.uid == uid;
+      // Organizers can read all users and update roles
+      allow read: if isOrganizer();
+      allow update: if isOrganizer();
+    }
+
+    match /quests/{questId} {
+      allow read: if isAuth();
+      allow write: if isOrganizer();
+    }
+
     match /projects/{projectId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isAuth()
         && resource.data.createdBy == request.auth.uid;
     }
 
     match /swipes/{swipeId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null
+      allow create: if isAuth();
+      allow read: if isAuth()
         && resource.data.swiperId == request.auth.uid;
     }
 
     match /teams/{teamId} {
-      allow read: if request.auth != null
+      allow read: if isAuth()
+        && (request.auth.uid in resource.data.memberUids || isOrganizer());
+      allow update: if isAuth()
         && request.auth.uid in resource.data.memberUids;
-      allow update: if request.auth != null
-        && request.auth.uid in resource.data.memberUids;
-      allow create: if request.auth != null;
+      allow create: if isAuth();
+      // Organizers can read all teams
+      allow read: if isOrganizer();
+    }
+
+    match /submissions/{submissionId} {
+      allow create: if isAuth();
+      allow read: if isAuth();
+      // Organizers can read all submissions
+      allow read: if isOrganizer();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuth()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuth();
+      allow update: if isAuth()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    match /helpRequests/{requestId} {
+      allow create: if isAuth();
+      allow read: if isMentorOrOrganizer();
+      allow update: if isMentorOrOrganizer();
+    }
+
+    match /judgments/{judgmentId} {
+      allow create: if isOrganizer();
+      allow read: if isOrganizer();
     }
   }
 }

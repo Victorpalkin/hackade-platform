@@ -57,7 +57,7 @@ export default function QuestsPage() {
                 glowColor={glowColors[colorIdx]}
                 hover={true}
                 className="cursor-pointer h-full"
-                onClick={() => router.push(`/quests/${quest.id}/match`)}
+                onClick={() => router.push(`/quests/${quest.id}`)}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`p-2 rounded-lg ${colorClasses[colorIdx]}`}>

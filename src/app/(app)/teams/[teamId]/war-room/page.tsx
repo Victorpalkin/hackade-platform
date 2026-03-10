@@ -8,7 +8,7 @@ import { ProgressChecklist } from '@/components/ui/ProgressChecklist';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { useProvisioning } from '@/lib/hooks/use-provisioning';
 import { useTeam } from '@/lib/hooks/use-team';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 
 export default function WarRoomPage() {
@@ -79,7 +79,14 @@ export default function WarRoomPage() {
             className="mt-auto pt-4"
           >
             <button
-              onClick={() => router.push(`/teams/${teamId}/submit`)}
+              onClick={() => {
+                // Update team phase to provisioning (complete), then navigate to build
+                if (teamId) {
+                  const teamRef = doc(db, 'teams', teamId);
+                  updateDoc(teamRef, { phase: 'provisioning' }).catch(() => {});
+                }
+                router.push(`/teams/${teamId}/build`);
+              }}
               className="w-full py-2 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-sm font-medium hover:bg-cyan-500/30 transition-colors cursor-pointer"
             >
               Continue to Build Phase

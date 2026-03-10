@@ -15,9 +15,10 @@ type Phase = 'deploy' | 'deploying' | 'deployed' | 'record' | 'recording' | 'sub
 
 interface DeployFlowProps {
   submission?: Submission;
+  onSubmit?: (data: Submission) => void;
 }
 
-export function DeployFlow({ submission }: DeployFlowProps) {
+export function DeployFlow({ submission, onSubmit }: DeployFlowProps) {
   const data = submission || mockSubmission;
   const [phase, setPhase] = useState<Phase>('deploy');
   const [showConfetti, setShowConfetti] = useState(false);
@@ -43,7 +44,12 @@ export function DeployFlow({ submission }: DeployFlowProps) {
 
   const handleSubmit = () => {
     setPhase('scanning');
-    setTimeout(() => setPhase('submitted'), 2500);
+    setTimeout(() => {
+      setPhase('submitted');
+      if (onSubmit) {
+        onSubmit(data);
+      }
+    }, 2500);
   };
 
   return (

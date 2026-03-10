@@ -12,7 +12,7 @@ export default function CreateProjectPage() {
 
   const handleSubmit = async (data: { title: string; description: string; lookingFor: string[]; tags: string[] }) => {
     await createProject(data);
-    router.push(`/quests/${questId}/match`);
+    router.push(`/quests/${questId}`);
   };
 
   return (

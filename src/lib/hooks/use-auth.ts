@@ -36,6 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return onAuthStateChanged(async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        // Set auth token cookie for middleware
+        const token = await firebaseUser.getIdToken();
+        document.cookie = `firebaseAuthToken=${token}; path=/; max-age=3600; SameSite=Lax`;
+
         const userRef = doc(db, 'users', firebaseUser.uid);
         const newProfile: Omit<UserProfile, 'id'> = {
           uid: firebaseUser.uid,
@@ -46,9 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         await setDoc(userRef, newProfile, { merge: true });
         const snap = await getDoc(userRef);
-        setProfile({ id: snap.id, ...snap.data() } as UserProfile);
+        const profile = { id: snap.id, ...snap.data() } as UserProfile;
+        setProfile(profile);
+
+        // Set role cookie for middleware route protection
+        document.cookie = `userRole=${profile.role}; path=/; max-age=3600; SameSite=Lax`;
       } else {
         setProfile(null);
+        // Clear auth cookies
+        document.cookie = 'firebaseAuthToken=; path=/; max-age=0';
+        document.cookie = 'userRole=; path=/; max-age=0';
       }
       setLoading(false);
     });
@@ -69,6 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleSignOut = useCallback(async () => {
     await signOut();
     setProfile(null);
+    document.cookie = 'firebaseAuthToken=; path=/; max-age=0';
+    document.cookie = 'userRole=; path=/; max-age=0';
   }, []);
 
   return React.createElement(

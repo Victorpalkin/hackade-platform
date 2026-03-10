@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 import { Code2, Palette, Presentation, ArrowRight, Check } from 'lucide-react';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { GlowCard } from '@/components/ui/GlowCard';
@@ -24,7 +25,29 @@ export default function TeamPage() {
   const { teamId } = useParams<{ teamId: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const { members, claimRole, allClaimed, loading } = useTeam(teamId);
+  const { team, members, claimRole, allClaimed, loading } = useTeam(teamId);
+
+  // Smart routing based on team phase for returning users
+  useEffect(() => {
+    if (loading || !team) return;
+    const allRolesClaimed = team.members.every((m) => m.claimed);
+    if (allRolesClaimed || (team.phase && team.phase !== 'forming')) {
+      switch (team.phase) {
+        case 'submitted':
+          router.replace(`/teams/${teamId}/submit`);
+          break;
+        case 'building':
+          router.replace(`/teams/${teamId}/build`);
+          break;
+        case 'provisioning':
+        default:
+          if (allRolesClaimed) {
+            router.replace(`/teams/${teamId}/war-room`);
+          }
+          break;
+      }
+    }
+  }, [loading, team, teamId, router]);
 
   if (loading) {
     return (

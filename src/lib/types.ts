@@ -4,7 +4,7 @@ export interface UserProfile {
   displayName: string;
   email: string;
   photoURL: string;
-  role: 'hacker' | 'organizer';
+  role: 'hacker' | 'organizer' | 'mentor';
 }
 
 export interface Quest {
@@ -51,6 +51,7 @@ export interface Team {
   members: TeamMember[];
   memberUids: string[];
   provisioningStatus: Record<string, 'pending' | 'in-progress' | 'complete'>;
+  phase: 'forming' | 'provisioning' | 'building' | 'submitted';
   createdAt: number;
 }
 
@@ -70,12 +71,45 @@ export interface ProvisioningItem {
 }
 
 export interface Submission {
+  id?: string;
+  teamId?: string;
   projectName: string;
   url: string;
   videoUrl: string;
   tracks: string[];
   description: string;
   teamMembers: string[];
+  submittedAt?: number;
+  submittedBy?: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'match' | 'team_joined' | 'mentor_request';
+  message: string;
+  link: string;
+  read: boolean;
+  createdAt: number;
+}
+
+export interface HelpRequest {
+  id: string;
+  teamId: string;
+  teamName: string;
+  description: string;
+  status: 'pending' | 'claimed' | 'resolved';
+  mentorId?: string;
+  createdAt: number;
+}
+
+export interface Judgment {
+  id: string;
+  submissionId: string;
+  judgerId: string;
+  score: number;
+  notes: string;
+  createdAt: number;
 }
 
 export type SceneId = 1 | 2 | 3 | 4 | 5;

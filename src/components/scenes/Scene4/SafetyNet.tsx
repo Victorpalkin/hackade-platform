@@ -9,16 +9,35 @@ import { TypingEffect } from '@/components/ui/TypingEffect';
 import { Terminal } from '@/components/ui/Terminal';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { vibeCodingLines } from '@/lib/mock-data';
+import { addDoc } from 'firebase/firestore';
+import { helpRequestsCollection } from '@/lib/firebase/collections';
+import type { HelpRequest } from '@/lib/types';
 
 interface SafetyNetProps {
   onContinue: () => void;
+  teamId?: string;
 }
 
-export function SafetyNet({ onContinue }: SafetyNetProps) {
+export function SafetyNet({ onContinue, teamId }: SafetyNetProps) {
   const [showPanic, setShowPanic] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
   const [aiTypingDone, setAiTypingDone] = useState(false);
   const [terminalDone, setTerminalDone] = useState(false);
+  const [escalated, setEscalated] = useState(false);
+
+  const handleEscalate = async () => {
+    if (!teamId) return;
+    const helpRequest: Omit<HelpRequest, 'id'> = {
+      teamId,
+      teamName: `Team ${teamId.slice(0, 8)}`,
+      description: 'Team requested mentor help via Panic Button',
+      status: 'pending',
+      createdAt: Date.now(),
+    };
+    await addDoc(helpRequestsCollection, helpRequest).catch(() => {});
+    setEscalated(true);
+    setShowPanic(false);
+  };
 
   return (
     <div className="flex min-h-screen grid-bg">
@@ -133,9 +152,9 @@ export function SafetyNet({ onContinue }: SafetyNetProps) {
                 <ArcadeButton variant="cyan" size="sm">
                   Generate Fix
                 </ArcadeButton>
-                <ArcadeButton variant="yellow" size="sm" onClick={() => setShowPanic(false)}>
+                <ArcadeButton variant="yellow" size="sm" onClick={handleEscalate} disabled={escalated}>
                   <User size={14} className="inline mr-1" />
-                  Escalate to Mentor
+                  {escalated ? 'Mentor Notified!' : 'Escalate to Mentor'}
                 </ArcadeButton>
               </motion.div>
             )}
