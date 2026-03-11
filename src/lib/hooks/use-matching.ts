@@ -2,20 +2,21 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import {
-  query, where, getDocs, addDoc, doc, setDoc, onSnapshot,
+  query, where, getDocs, addDoc, doc, setDoc, onSnapshot, updateDoc, arrayUnion, collection,
 } from 'firebase/firestore';
-import { ProjectCard, SwipeRecord, Team, Notification } from '../types';
-import { projectsCollection, swipesCollection, teamsCollection, notificationsCollection } from '../firebase/collections';
+import { Project, SwipeRecord, Notification } from '../types';
+import { projectsCollection, swipesCollection } from '../firebase/collections';
 import { db } from '../firebase/client';
 import { useAuth } from './use-auth';
 import { projectCards as mockCards } from '../mock-data';
 
 export function useMatching(questId?: string) {
   const { user } = useAuth();
-  const [cards, setCards] = useState<ProjectCard[]>([]);
+  const [cards, setCards] = useState<Project[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [matched, setMatched] = useState<ProjectCard | null>(null);
-  const [matchedTeamId, setMatchedTeamId] = useState<string | null>(null);
+  const [matched, setMatched] = useState<Project | null>(null);
+  const [matchedProjectId, setMatchedProjectId] = useState<string | null>(null);
+  const [interestSent, setInterestSent] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,11 @@ export function useMatching(questId?: string) {
         // Filter out user's own projects and already-swiped projects
         const swipesQ = query(swipesCollection, where('swiperId', '==', user.uid));
         const swipesSnap = await getDocs(swipesQ);
-        const swipedIds = new Set(swipesSnap.docs.map((d) => d.data().projectId));
+        const swipedIds = new Set(
+          swipesSnap.docs
+            .filter((d) => !d.data().targetUid) // only hacker→project swipes
+            .map((d) => d.data().projectId)
+        );
 
         const filtered = allProjects.filter(
           (p) => p.createdBy !== user.uid && !swipedIds.has(p.id)
@@ -58,11 +63,11 @@ export function useMatching(questId?: string) {
 
       setSwipeDirection(direction);
       setError(null);
+      setInterestSent(false);
 
-      // Record the swipe in Firestore
-      const swipeKey = [user.uid, card.createdBy].sort().join('_');
       try {
-        await setDoc(doc(db, 'swipes', `${swipeKey}_${card.id}`), {
+        // Record the swipe
+        await setDoc(doc(db, 'swipes', `${user.uid}_${card.id}`), {
           swiperId: user.uid,
           projectId: card.id,
           direction,
@@ -70,58 +75,70 @@ export function useMatching(questId?: string) {
         } satisfies Omit<SwipeRecord, 'id'>);
 
         if (direction === 'right') {
-          // MVP: every right-swipe is treated as a match
-          setMatched(card);
+          // Check if founder already swiped right on this hacker
+          const founderSwipeQ = query(
+            swipesCollection,
+            where('swiperId', '==', card.createdBy),
+            where('targetUid', '==', user.uid),
+            where('projectId', '==', card.id),
+            where('direction', '==', 'right')
+          );
+          const founderSwipeSnap = await getDocs(founderSwipeQ);
 
-          // Assign roles from the project's lookingFor array
-          const userRole = card.lookingFor[0] || 'Developer';
-          const founderRole = card.lookingFor[1] || 'Project Lead';
-          const memberUids = [user.uid, card.founder.uid || card.createdBy];
+          if (!founderSwipeSnap.empty) {
+            // MATCH! Add hacker to project
+            const projectRef = doc(db, 'projects', card.id);
+            const newMember = {
+              id: user.uid,
+              name: user.displayName || 'Anonymous',
+              role: card.lookingFor[0] || 'Developer',
+              avatar: user.displayName?.charAt(0).toUpperCase() || 'A',
+              skills: [],
+              claimed: false,
+              uid: user.uid,
+            };
+            await updateDoc(projectRef, {
+              members: arrayUnion(newMember),
+              memberUids: arrayUnion(user.uid),
+            });
 
-          const teamData: Omit<Team, 'id'> = {
-            questId: questId || '',
-            projectId: card.id,
-            projectTitle: card.title,
-            memberUids,
-            members: [
-              {
-                id: user.uid,
-                name: user.displayName || 'You',
-                role: userRole,
-                avatar: user.displayName?.charAt(0).toUpperCase() || 'Y',
-                skills: [],
-                claimed: false,
-                uid: user.uid,
-              },
-              {
-                id: card.founder.uid || card.createdBy,
-                name: card.founder.name,
-                role: founderRole,
-                avatar: card.founder.avatar,
-                skills: [],
-                claimed: false,
-                uid: card.founder.uid || card.createdBy,
-              },
-            ],
-            provisioningStatus: {},
-            phase: 'forming',
-            createdAt: Date.now(),
-          };
-          const teamRef = await addDoc(teamsCollection, teamData);
-          setMatchedTeamId(teamRef.id);
+            setMatched(card);
+            setMatchedProjectId(card.id);
 
-          // Notify the project founder about the match
-          const founderId = card.founder.uid || card.createdBy;
-          if (founderId && founderId !== user.uid) {
-            const notification: Omit<Notification, 'id'> = {
-              userId: founderId,
+            // Notify both parties
+            const founderId = card.founder.uid || card.createdBy;
+            if (founderId !== user.uid) {
+              await addDoc(collection(db, 'notifications'), {
+                userId: founderId,
+                type: 'match',
+                message: `${user.displayName || 'Someone'} matched with your project "${card.title}"!`,
+                link: `/teams/${card.id}`,
+                read: false,
+                createdAt: Date.now(),
+              } satisfies Omit<Notification, 'id'>).catch(() => {});
+            }
+            await addDoc(collection(db, 'notifications'), {
+              userId: user.uid,
               type: 'match',
-              message: `${user.displayName || 'Someone'} matched with your project "${card.title}"`,
-              link: `/teams/${teamRef.id}`,
+              message: `You matched with project "${card.title}"!`,
+              link: `/teams/${card.id}`,
               read: false,
               createdAt: Date.now(),
-            };
-            await addDoc(notificationsCollection, notification).catch(() => {});
+            } satisfies Omit<Notification, 'id'>).catch(() => {});
+          } else {
+            // No mutual match yet — notify founder of interest
+            setInterestSent(true);
+            const founderId = card.founder.uid || card.createdBy;
+            if (founderId !== user.uid) {
+              await addDoc(collection(db, 'notifications'), {
+                userId: founderId,
+                type: 'team_joined',
+                message: `${user.displayName || 'Someone'} is interested in your project "${card.title}"`,
+                link: `/quests/${card.questId}/founder-match`,
+                read: false,
+                createdAt: Date.now(),
+              } satisfies Omit<Notification, 'id'>).catch(() => {});
+            }
           }
         }
       } catch (err) {
@@ -131,7 +148,8 @@ export function useMatching(questId?: string) {
       setTimeout(() => {
         setCurrentIndex((i) => Math.min(i + 1, cards.length));
         setSwipeDirection(null);
-      }, 300);
+        setInterestSent(false);
+      }, direction === 'right' ? 1500 : 300);
     },
     [cards, currentIndex, user, questId]
   );
@@ -139,7 +157,16 @@ export function useMatching(questId?: string) {
   const createProject = useCallback(
     async (data: { title: string; description: string; lookingFor: string[]; tags: string[] }) => {
       if (!user || !questId) return null;
-      const projectData: Omit<ProjectCard, 'id'> = {
+      const founderMember = {
+        id: user.uid,
+        name: user.displayName || 'Anonymous',
+        role: 'Project Lead',
+        avatar: user.displayName?.charAt(0) || 'A',
+        skills: [],
+        claimed: true,
+        uid: user.uid,
+      };
+      const projectData: Omit<Project, 'id'> = {
         ...data,
         founder: {
           name: user.displayName || 'Anonymous',
@@ -148,6 +175,11 @@ export function useMatching(questId?: string) {
         },
         questId,
         createdBy: user.uid,
+        members: [founderMember],
+        memberUids: [user.uid],
+        phase: 'forming',
+        provisioningStatus: {},
+        createdAt: Date.now(),
       };
       const ref = await addDoc(projectsCollection, projectData);
       return ref.id;
@@ -160,7 +192,8 @@ export function useMatching(questId?: string) {
     currentIndex,
     currentCard: cards[currentIndex] ?? null,
     matched,
-    matchedTeamId,
+    matchedProjectId,
+    interestSent,
     swipeDirection,
     swipe,
     createProject,

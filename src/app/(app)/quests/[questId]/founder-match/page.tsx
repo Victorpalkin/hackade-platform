@@ -3,17 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
-import { ThumbsUp, ThumbsDown, Users, Tag, Sparkles, ArrowRight, Plus, AlertTriangle, Send } from 'lucide-react';
-import { useMatching } from '@/lib/hooks/use-matching';
+import { ThumbsUp, ThumbsDown, Sparkles, ArrowRight, AlertTriangle, Send, Mail, User } from 'lucide-react';
+import { useFounderMatching } from '@/lib/hooks/use-founder-matching';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import Link from 'next/link';
 
-export default function MatchPage() {
+export default function FounderMatchPage() {
   const { questId } = useParams<{ questId: string }>();
   const router = useRouter();
   const {
-    cards, currentIndex, matched, matchedProjectId, interestSent, swipe, isComplete, loading, error,
-  } = useMatching(questId);
+    project, hackers, currentIndex, currentHacker, matched, interestSent,
+    swipe, isComplete, loading, error,
+  } = useFounderMatching(questId);
   const [showMatch, setShowMatch] = useState(false);
 
   const x = useMotionValue(0);
@@ -23,25 +24,33 @@ export default function MatchPage() {
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.x > 100) {
-      handleSwipe('right');
+      swipe('right');
     } else if (info.offset.x < -100) {
-      handleSwipe('left');
+      swipe('left');
     }
   };
 
-  const handleSwipe = async (direction: 'left' | 'right') => {
-    await swipe(direction);
-  };
-
-  // After swipe completes, check if we got a match
   useEffect(() => {
     if (matched && !showMatch) setShowMatch(true);
+    if (!matched) setShowMatch(false);
   }, [matched, showMatch]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="text-cyan-400 animate-pulse">Loading projects...</div>
+        <div className="text-cyan-400 animate-pulse">Loading hackers...</div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
+        <h2 className="text-xl font-bold text-gray-400">No project found in this quest</h2>
+        <p className="text-gray-500 text-sm">Create a project first to start finding teammates.</p>
+        <Link href={`/quests/${questId}/create-project`}>
+          <ArcadeButton variant="green">Create Project</ArcadeButton>
+        </Link>
       </div>
     );
   }
@@ -64,27 +73,6 @@ export default function MatchPage() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] p-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-radial from-fuchsia-500/10 via-transparent to-transparent" />
 
-        {Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-fuchsia-400 rounded-full"
-            initial={{
-              x: Math.random() * 1000,
-              y: Math.random() * 800,
-              opacity: 0,
-            }}
-            animate={{
-              y: [null, Math.random() * -200],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 2 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-
         <motion.div
           initial={{ scale: 0, rotate: -10 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -101,9 +89,7 @@ export default function MatchPage() {
 
           <motion.h1
             className="text-6xl font-black mb-4 bg-gradient-to-r from-fuchsia-400 via-cyan-400 to-fuchsia-400 bg-clip-text text-transparent"
-            animate={{
-              backgroundPosition: ['0% center', '200% center'],
-            }}
+            animate={{ backgroundPosition: ['0% center', '200% center'] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
             style={{ backgroundSize: '200% auto' }}
           >
@@ -111,38 +97,11 @@ export default function MatchPage() {
           </motion.h1>
 
           <p className="text-xl text-gray-300 mb-2">
-            You matched with <span className="text-cyan-400 font-bold">{matched.title}</span>
+            <span className="text-cyan-400 font-bold">{matched.displayName}</span> has been added to your team!
           </p>
           <p className="text-gray-500 mb-8">
-            {matched.founder.name} wants you on the team
+            They expressed interest in {project.title}
           </p>
-
-          <div className="flex gap-6 justify-center mb-8">
-            <motion.div
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-2xl font-bold"
-              initial={{ x: -100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              Y
-            </motion.div>
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.8, type: 'spring' }}
-              className="self-center"
-            >
-              <Sparkles size={24} className="text-accent-yellow" />
-            </motion.div>
-            <motion.div
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-500 flex items-center justify-center text-2xl font-bold"
-              initial={{ x: 100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {matched.founder.avatar}
-            </motion.div>
-          </div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -153,15 +112,9 @@ export default function MatchPage() {
               variant="magenta"
               size="lg"
               pulse
-              onClick={() => {
-                if (matchedProjectId) {
-                  router.push(`/teams/${matchedProjectId}`);
-                } else {
-                  router.push('/quests');
-                }
-              }}
+              onClick={() => router.push(`/teams/${project.id}`)}
             >
-              Join the Team <ArrowRight size={18} className="inline ml-2" />
+              View Team <ArrowRight size={18} className="inline ml-2" />
             </ArcadeButton>
           </motion.div>
         </motion.div>
@@ -169,29 +122,26 @@ export default function MatchPage() {
     );
   }
 
-  // No more cards
-  if (isComplete || cards.length === 0) {
+  // No more hackers
+  if (isComplete || hackers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] p-8 grid-bg">
-        <h2 className="text-2xl font-bold mb-4">No more projects to swipe</h2>
-        <p className="text-gray-400 mb-6">Create your own project or check back later!</p>
+        <h2 className="text-2xl font-bold mb-4">No more hackers to review</h2>
+        <p className="text-gray-400 mb-6">Check back later as more people join!</p>
         <div className="flex gap-4">
-          <Link href={`/quests/${questId}/create-project`}>
-            <ArcadeButton variant="green">
-              <Plus size={16} className="inline mr-2" />
-              Create Project
-            </ArcadeButton>
+          <Link href={`/teams/${project.id}`}>
+            <ArcadeButton variant="cyan">View My Team</ArcadeButton>
           </Link>
-          <Link href="/quests">
-            <ArcadeButton variant="cyan">Back to Quests</ArcadeButton>
+          <Link href={`/quests/${questId}`}>
+            <ArcadeButton variant="green">Back to Quest</ArcadeButton>
           </Link>
         </div>
       </div>
     );
   }
 
-  const card = cards[currentIndex];
-  if (!card) return null;
+  const hacker = currentHacker;
+  if (!hacker) return null;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] p-8 grid-bg">
@@ -200,32 +150,31 @@ export default function MatchPage() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-8"
       >
-        <h1 className="text-3xl font-bold glow-text-cyan mb-2">FIND YOUR TEAM</h1>
-        <p className="text-gray-400">Swipe right on projects that excite you</p>
+        <h1 className="text-3xl font-bold glow-text-magenta mb-2">FIND TEAMMATES</h1>
+        <p className="text-gray-400">Swipe right on hackers you want on <span className="text-cyan-400">{project.title}</span></p>
       </motion.div>
 
-      {/* Interest sent toast */}
       {interestSent && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
-          className="fixed top-20 z-50 px-6 py-3 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 flex items-center gap-2"
+          className="fixed top-20 z-50 px-6 py-3 rounded-xl bg-fuchsia-500/20 border border-fuchsia-400/50 text-fuchsia-300 flex items-center gap-2"
         >
           <Send size={16} />
-          Interest sent! The founder will be notified.
+          Interest recorded! They&apos;ll be notified when they swipe on your project.
         </motion.div>
       )}
 
       <div className="relative w-80 h-[420px]">
-        {currentIndex < cards.length - 1 && (
+        {currentIndex < hackers.length - 1 && (
           <div className="absolute inset-0 glass rounded-2xl p-6 opacity-40 scale-95 translate-y-3">
-            <div className="text-center text-gray-500 mt-20">Next project...</div>
+            <div className="text-center text-gray-500 mt-20">Next hacker...</div>
           </div>
         )}
 
         <motion.div
-          key={card.id}
+          key={hacker.uid}
           className="absolute inset-0 glass rounded-2xl p-6 cursor-grab active:cursor-grabbing border border-white/10"
           style={{ x, rotate }}
           drag="x"
@@ -250,34 +199,25 @@ export default function MatchPage() {
             NOPE
           </motion.div>
 
-          <div className="mt-12">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-fuchsia-500 flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-              {card.founder.avatar}
+          <div className="mt-12 flex flex-col items-center">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-fuchsia-500 to-cyan-500 flex items-center justify-center text-3xl font-bold mx-auto mb-6">
+              {hacker.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={hacker.photoURL} alt={hacker.displayName} className="w-full h-full rounded-full object-cover" />
+              ) : (
+                hacker.displayName?.charAt(0).toUpperCase() || '?'
+              )}
             </div>
-            <h2 className="text-xl font-bold text-center mb-2">{card.title}</h2>
-            <p className="text-sm text-gray-400 text-center mb-6">{card.description}</p>
+            <h2 className="text-2xl font-bold text-center mb-2">{hacker.displayName}</h2>
 
-            <div className="flex items-center gap-2 mb-3">
-              <Users size={14} className="text-cyan-400" />
-              <span className="text-xs text-gray-400">Looking for:</span>
-              <div className="flex gap-1 flex-wrap">
-                {card.lookingFor.map((role) => (
-                  <span key={role} className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300">
-                    {role}
-                  </span>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 text-gray-400 mb-4">
+              <Mail size={14} />
+              <span className="text-sm">{hacker.email}</span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Tag size={14} className="text-fuchsia-400" />
-              <div className="flex gap-1 flex-wrap">
-                {card.tags.map((tag) => (
-                  <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500/10 text-fuchsia-300">
-                    {tag}
-                  </span>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <User size={14} />
+              <span className="text-sm capitalize">{hacker.role}</span>
             </div>
           </div>
 
@@ -304,15 +244,8 @@ export default function MatchPage() {
 
       <div className="flex items-center gap-4 mt-6">
         <p className="text-xs text-gray-600">
-          Card {currentIndex + 1} of {cards.length}
+          Hacker {currentIndex + 1} of {hackers.length}
         </p>
-        <Link
-          href={`/quests/${questId}/create-project`}
-          className="text-xs text-cyan-400/60 hover:text-cyan-400 transition-colors"
-        >
-          <Plus size={12} className="inline mr-1" />
-          Create your own
-        </Link>
       </div>
     </div>
   );

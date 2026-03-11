@@ -16,8 +16,8 @@ export function useProvisioning(teamId?: string) {
   useEffect(() => {
     if (!teamId) return;
 
-    const teamRef = doc(db, 'teams', teamId);
-    const unsubscribe = onSnapshot(teamRef, (snap) => {
+    const projectRef = doc(db, 'projects', teamId);
+    const unsubscribe = onSnapshot(projectRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
         const persisted = data.provisioningStatus as Record<string, 'pending' | 'in-progress' | 'complete'> | undefined;
@@ -59,8 +59,8 @@ export function useProvisioning(teamId?: string) {
             if (teamId) {
               const statusMap: Record<string, string> = {};
               updated.forEach((it) => { statusMap[it.id] = it.status; });
-              const teamRef = doc(db, 'teams', teamId);
-              updateDoc(teamRef, { provisioningStatus: statusMap }).catch(() => {});
+              const projectRef = doc(db, 'projects', teamId);
+              updateDoc(projectRef, { provisioningStatus: statusMap }).catch(() => {});
             }
 
             return updated;

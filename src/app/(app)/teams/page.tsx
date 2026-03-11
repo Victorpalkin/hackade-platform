@@ -4,15 +4,15 @@ import { useEffect, useState } from 'react';
 import { query, where, onSnapshot } from 'firebase/firestore';
 import Link from 'next/link';
 import { Users, ArrowRight } from 'lucide-react';
-import { teamsCollection } from '@/lib/firebase/collections';
+import { projectsCollection } from '@/lib/firebase/collections';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
-import type { Team } from '@/lib/types';
+import type { Project } from '@/lib/types';
 
 export default function TeamsPage() {
   const { user } = useAuth();
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,11 +21,11 @@ export default function TeamsPage() {
       return;
     }
 
-    const q = query(teamsCollection, where('memberUids', 'array-contains', user.uid));
+    const q = query(projectsCollection, where('memberUids', 'array-contains', user.uid));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        setTeams(snapshot.docs.map((d) => d.data()));
+        setProjects(snapshot.docs.map((d) => d.data()));
         setLoading(false);
       },
       () => {
@@ -43,7 +43,7 @@ export default function TeamsPage() {
     );
   }
 
-  if (teams.length === 0) {
+  if (projects.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
         <Users size={48} className="text-gray-600" />
@@ -60,13 +60,16 @@ export default function TeamsPage() {
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-3xl font-bold glow-text-cyan mb-6">My Teams</h1>
       <div className="space-y-4">
-        {teams.map((team) => (
-          <Link key={team.id} href={`/teams/${team.id}`}>
+        {projects.map((project) => (
+          <Link key={project.id} href={`/teams/${project.id}`}>
             <GlowCard glowColor="cyan" className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-lg">{team.projectTitle}</h3>
+                <h3 className="font-bold text-lg">{project.title}</h3>
                 <p className="text-sm text-gray-400">
-                  {team.members.length} member{team.members.length !== 1 ? 's' : ''}
+                  {project.members.length} member{project.members.length !== 1 ? 's' : ''}
+                  {project.createdBy === user?.uid && (
+                    <span className="ml-2 text-xs text-fuchsia-400">(founder)</span>
+                  )}
                 </p>
               </div>
               <ArrowRight size={18} className="text-cyan-400" />

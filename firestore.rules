@@ -21,6 +21,8 @@ service cloud.firestore {
       // Organizers can read all users and update roles
       allow read: if isOrganizer();
       allow update: if isOrganizer();
+      // Authenticated users can read other users (for founder matching)
+      allow read: if isAuth();
     }
 
     match /quests/{questId} {
@@ -31,22 +33,18 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if isAuth();
       allow create: if isAuth();
-      allow update, delete: if isAuth()
+      // Allow updates by creator or members (for phase changes, adding members)
+      allow update: if isAuth()
+        && (resource.data.createdBy == request.auth.uid
+            || request.auth.uid in resource.data.memberUids);
+      allow delete: if isAuth()
         && resource.data.createdBy == request.auth.uid;
     }
 
     match /swipes/{swipeId} {
       allow create: if isAuth();
-      allow read: if isAuth()
-        && resource.data.swiperId == request.auth.uid;
-    }
-
-    match /teams/{teamId} {
-      allow read: if isAuth()
-        && (request.auth.uid in resource.data.memberUids || isOrganizer());
-      allow update: if isAuth()
-        && request.auth.uid in resource.data.memberUids;
-      allow create: if isAuth();
+      // Allow reading swipes for mutual match checking
+      allow read: if isAuth();
     }
 
     match /submissions/{submissionId} {

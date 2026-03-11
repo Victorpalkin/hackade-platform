@@ -3,14 +3,15 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Leaf, Eye, ArrowRight, Plus, Users } from 'lucide-react';
+import { Brain, Leaf, Eye, ArrowRight, Plus, Users, UserPlus } from 'lucide-react';
 import { doc, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { projectsCollection } from '@/lib/firebase/collections';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { GlowCard } from '@/components/ui/GlowCard';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { quests as mockQuests } from '@/lib/mock-data';
-import type { Quest } from '@/lib/types';
+import type { Quest, Project } from '@/lib/types';
 
 const iconMap: Record<string, React.ReactNode> = {
   Brain: <Brain size={32} />,
@@ -27,8 +28,10 @@ const difficultyColors: Record<string, string> = {
 export default function QuestDetailPage() {
   const { questId } = useParams<{ questId: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [quest, setQuest] = useState<Quest | null>(null);
   const [projectCount, setProjectCount] = useState(0);
+  const [myProject, setMyProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +43,6 @@ export default function QuestDetailPage() {
         if (snap.exists()) {
           setQuest({ id: snap.id, ...snap.data() } as Quest);
         } else {
-          // Fall back to mock data
           const mock = mockQuests.find((q) => q.id === questId);
           if (mock) setQuest(mock);
         }
@@ -57,6 +59,19 @@ export default function QuestDetailPage() {
       .then((snap) => setProjectCount(snap.size))
       .catch(() => {});
   }, [questId]);
+
+  // Check if user has a project in this quest
+  useEffect(() => {
+    if (!questId || !user) return;
+    const q = query(projectsCollection, where('questId', '==', questId), where('createdBy', '==', user.uid));
+    getDocs(q)
+      .then((snap) => {
+        if (!snap.empty) {
+          setMyProject(snap.docs[0].data());
+        }
+      })
+      .catch(() => {});
+  }, [questId, user]);
 
   if (loading) {
     return (
@@ -82,7 +97,7 @@ export default function QuestDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl w-full"
+        className="max-w-2xl w-full space-y-6"
       >
         <GlowCard glowColor="cyan" hover={false} className="p-8">
           <div className="flex items-center gap-4 mb-6">
@@ -139,6 +154,35 @@ export default function QuestDetailPage() {
             </ArcadeButton>
           </div>
         </GlowCard>
+
+        {myProject && (
+          <GlowCard glowColor="magenta" hover={false} className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-fuchsia-400 mb-1">My Project</p>
+                <h3 className="text-xl font-bold">{myProject.title}</h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  {myProject.members.length} member{myProject.members.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <ArcadeButton
+                  variant="magenta"
+                  onClick={() => router.push(`/quests/${questId}/founder-match`)}
+                >
+                  <UserPlus size={16} className="inline mr-2" />
+                  Find Teammates
+                </ArcadeButton>
+                <ArcadeButton
+                  variant="cyan"
+                  onClick={() => router.push(`/teams/${myProject.id}`)}
+                >
+                  View Team
+                </ArcadeButton>
+              </div>
+            </div>
+          </GlowCard>
+        )}
       </motion.div>
     </div>
   );

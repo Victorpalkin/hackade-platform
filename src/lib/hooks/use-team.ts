@@ -3,13 +3,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase/client';
-import { TeamMember, Team } from '../types';
+import { TeamMember, Project } from '../types';
 import { useAuth } from './use-auth';
 import { teamMembers as mockMembers } from '../mock-data';
 
 export function useTeam(teamId?: string) {
   const { user } = useAuth();
-  const [team, setTeam] = useState<Team | null>(null);
+  const [team, setTeam] = useState<Project | null>(null);
   const [members, setMembers] = useState<TeamMember[]>(
     mockMembers.map((m) => ({ ...m, claimed: false }))
   );
@@ -22,12 +22,12 @@ export function useTeam(teamId?: string) {
       return;
     }
 
-    const teamRef = doc(db, 'teams', teamId);
+    const projectRef = doc(db, 'projects', teamId);
     const unsubscribe = onSnapshot(
-      teamRef,
+      projectRef,
       (snap) => {
         if (snap.exists()) {
-          const data = { id: snap.id, ...snap.data() } as Team;
+          const data = { id: snap.id, ...snap.data() } as Project;
           setTeam(data);
           setMembers(data.members);
         }
@@ -50,11 +50,11 @@ export function useTeam(teamId?: string) {
         return;
       }
 
-      const teamRef = doc(db, 'teams', teamId);
+      const projectRef = doc(db, 'projects', teamId);
       await runTransaction(db, async (transaction) => {
-        const snap = await transaction.get(teamRef);
-        if (!snap.exists()) throw new Error('Team not found');
-        const data = snap.data() as Omit<Team, 'id'>;
+        const snap = await transaction.get(projectRef);
+        if (!snap.exists()) throw new Error('Project not found');
+        const data = snap.data() as Omit<Project, 'id'>;
         const target = data.members.find((m) => m.id === memberId);
         if (target?.claimed) throw new Error('Role already claimed');
 
@@ -64,7 +64,7 @@ export function useTeam(teamId?: string) {
             : m
         );
         const updatedUids = [...new Set(updatedMembers.filter((m) => m.uid).map((m) => m.uid!))];
-        transaction.update(teamRef, { members: updatedMembers, memberUids: updatedUids });
+        transaction.update(projectRef, { members: updatedMembers, memberUids: updatedUids });
       });
     },
     [teamId, user]

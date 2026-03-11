@@ -19,8 +19,8 @@ export default function BuildPage() {
   useEffect(() => {
     if (teamId && team && team.phase === 'provisioning' && !phaseUpdated.current) {
       phaseUpdated.current = true;
-      const teamRef = doc(db, 'teams', teamId);
-      updateDoc(teamRef, { phase: 'building' }).catch(() => {
+      const projectRef = doc(db, 'projects', teamId);
+      updateDoc(projectRef, { phase: 'building' }).catch(() => {
         phaseUpdated.current = false;
       });
     }
@@ -34,13 +34,13 @@ export default function BuildPage() {
     if (!teamId) return;
     const helpRequest: Omit<HelpRequest, 'id'> = {
       teamId,
-      teamName: team?.projectTitle || `Team ${teamId.slice(0, 8)}`,
+      teamName: team?.title || `Team ${teamId.slice(0, 8)}`,
       description: 'Team requested mentor help via Panic Button',
       status: 'pending',
       createdAt: Date.now(),
     };
     await addDoc(helpRequestsCollection, helpRequest);
-  }, [teamId, team?.projectTitle]);
+  }, [teamId, team?.title]);
 
   return <SafetyNet onContinue={handleContinue} onEscalate={handleEscalate} />;
 }

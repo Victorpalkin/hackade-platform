@@ -1,4 +1,4 @@
-import { Quest, ProjectCard, TeamMember, ProvisioningItem, Submission } from './types';
+import { Quest, Project, TeamMember, ProvisioningItem, Submission } from './types';
 
 export const quests: Quest[] = [
   {
@@ -33,16 +33,21 @@ export const quests: Quest[] = [
   },
 ];
 
-export const projectCards: ProjectCard[] = [
+export const projectCards: Project[] = [
   {
     id: 'p1',
     title: 'Generic Dashboard Builder',
     description: 'Yet another dashboard builder with charts and graphs. Nothing special here.',
     lookingFor: ['Backend Dev', 'Designer'],
     tags: ['React', 'Charts'],
-    founder: { name: 'Bob', avatar: 'B' },
+    founder: { name: 'Bob', avatar: 'B', uid: 'seed-user-bob' },
     questId: 'q1',
     createdBy: 'seed-user-bob',
+    members: [{ id: 'seed-user-bob', name: 'Bob', role: 'Project Lead', avatar: 'B', skills: [], uid: 'seed-user-bob' }],
+    memberUids: ['seed-user-bob'],
+    phase: 'forming',
+    provisioningStatus: {},
+    createdAt: Date.now(),
   },
   {
     id: 'p2',
@@ -50,9 +55,14 @@ export const projectCards: ProjectCard[] = [
     description: 'A virtual pet powered by Gemini that learns your habits and evolves. Feed it data, watch it grow!',
     lookingFor: ['ML Engineer', 'React Dev'],
     tags: ['AI/ML', 'Gemini', 'Fun'],
-    founder: { name: 'Alice', avatar: 'A' },
+    founder: { name: 'Alice', avatar: 'A', uid: 'seed-user-alice' },
     questId: 'q1',
     createdBy: 'seed-user-alice',
+    members: [{ id: 'seed-user-alice', name: 'Alice', role: 'Project Lead', avatar: 'A', skills: [], uid: 'seed-user-alice' }],
+    memberUids: ['seed-user-alice'],
+    phase: 'forming',
+    provisioningStatus: {},
+    createdAt: Date.now(),
   },
 ];
 

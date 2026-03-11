@@ -18,7 +18,17 @@ export interface Quest {
   icon?: string;
 }
 
-export interface ProjectCard {
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  skills: string[];
+  claimed?: boolean;
+  uid?: string;
+}
+
+export interface Project {
   id: string;
   title: string;
   description: string;
@@ -31,27 +41,11 @@ export interface ProjectCard {
   };
   questId: string;
   createdBy: string;
-}
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  avatar: string;
-  skills: string[];
-  claimed?: boolean;
-  uid?: string;
-}
-
-export interface Team {
-  id: string;
-  questId: string;
-  projectId: string;
-  projectTitle: string;
+  // Team fields
   members: TeamMember[];
   memberUids: string[];
-  provisioningStatus: Record<string, 'pending' | 'in-progress' | 'complete'>;
   phase: 'forming' | 'provisioning' | 'building' | 'submitted';
+  provisioningStatus: Record<string, 'pending' | 'in-progress' | 'complete'>;
   createdAt: number;
 }
 
@@ -59,6 +53,7 @@ export interface SwipeRecord {
   id: string;
   swiperId: string;
   projectId: string;
+  targetUid?: string;
   direction: 'left' | 'right';
   timestamp: number;
 }

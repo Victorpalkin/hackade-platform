@@ -17,8 +17,8 @@ export default function SubmitPage() {
 
   const submission: Submission | undefined = team
     ? {
-        projectName: team.projectTitle,
-        url: `https://${team.projectTitle.toLowerCase().replace(/\s+/g, '-')}.hackade.dev`,
+        projectName: team.title,
+        url: `https://${team.title.toLowerCase().replace(/\s+/g, '-')}.hackade.dev`,
         videoUrl: `https://pitch.hackade.dev/rec_${teamId?.slice(0, 8)}`,
         tracks: [],
         description: '',
@@ -36,9 +36,9 @@ export default function SubmitPage() {
     };
     await addDoc(submissionsCollection, submissionData).catch(() => {});
 
-    // Update team phase to submitted
-    const teamRef = doc(db, 'teams', teamId);
-    await updateDoc(teamRef, { phase: 'submitted' }).catch(() => {});
+    // Update project phase to submitted
+    const projectRef = doc(db, 'projects', teamId);
+    await updateDoc(projectRef, { phase: 'submitted' }).catch(() => {});
   }, [teamId, user]);
 
   return <DeployFlow submission={submission} onSubmit={handleSubmit} />;

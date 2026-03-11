@@ -43,7 +43,7 @@ export default function WarRoomPage() {
     }).catch(() => {});
   }, [team?.questId]);
 
-  const projectTitle = team?.projectTitle || 'Your Project';
+  const projectTitle = team?.title || 'Your Project';
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] grid-bg">
@@ -82,8 +82,8 @@ export default function WarRoomPage() {
               onClick={() => {
                 // Update team phase to provisioning (complete), then navigate to build
                 if (teamId) {
-                  const teamRef = doc(db, 'teams', teamId);
-                  updateDoc(teamRef, { phase: 'provisioning' }).catch(() => {});
+                  const projectRef = doc(db, 'projects', teamId);
+                  updateDoc(projectRef, { phase: 'provisioning' }).catch(() => {});
                 }
                 router.push(`/teams/${teamId}/build`);
               }}

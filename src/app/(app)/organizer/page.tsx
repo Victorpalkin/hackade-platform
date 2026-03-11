@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCountFromServer } from 'firebase/firestore';
 import { GlowCard } from '@/components/ui/GlowCard';
-import { questsCollection, teamsCollection, submissionsCollection, usersCollection } from '@/lib/firebase/collections';
+import { questsCollection, projectsCollection, submissionsCollection, usersCollection } from '@/lib/firebase/collections';
 import { Users, Map, FileText, Gamepad2 } from 'lucide-react';
 
 interface Stats {
@@ -20,14 +20,14 @@ export default function OrganizerDashboard() {
   useEffect(() => {
     Promise.all([
       getCountFromServer(usersCollection),
-      getCountFromServer(teamsCollection),
+      getCountFromServer(projectsCollection),
       getCountFromServer(questsCollection),
       getCountFromServer(submissionsCollection),
     ])
-      .then(([usersSnap, teamsSnap, questsSnap, subsSnap]) => {
+      .then(([usersSnap, projectsSnap, questsSnap, subsSnap]) => {
         setStats({
           hackers: usersSnap.data().count,
-          teams: teamsSnap.data().count,
+          teams: projectsSnap.data().count,
           quests: questsSnap.data().count,
           submissions: subsSnap.data().count,
         });

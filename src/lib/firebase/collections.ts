@@ -5,7 +5,7 @@ import {
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from './client';
-import type { Quest, ProjectCard, TeamMember, SwipeRecord, UserProfile, Team, Submission, Notification, HelpRequest, Judgment } from '../types';
+import type { Quest, Project, SwipeRecord, UserProfile, Submission, Notification, HelpRequest, Judgment } from '../types';
 
 function createConverter<T extends DocumentData>(): FirestoreDataConverter<T> {
   return {
@@ -19,8 +19,7 @@ function createConverter<T extends DocumentData>(): FirestoreDataConverter<T> {
 }
 
 export const questsCollection = collection(db, 'quests').withConverter(createConverter<Quest>());
-export const projectsCollection = collection(db, 'projects').withConverter(createConverter<ProjectCard>());
-export const teamsCollection = collection(db, 'teams').withConverter(createConverter<Team>());
+export const projectsCollection = collection(db, 'projects').withConverter(createConverter<Project>());
 export const swipesCollection = collection(db, 'swipes').withConverter(createConverter<SwipeRecord>());
 export const usersCollection = collection(db, 'users').withConverter(createConverter<UserProfile>());
 export const submissionsCollection = collection(db, 'submissions').withConverter(createConverter<Submission>());
