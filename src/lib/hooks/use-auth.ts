@@ -36,6 +36,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return onAuthStateChanged(async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        // Check email allowlist
+        const res = await fetch('/api/auth/check-allowlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: firebaseUser.email }),
+        });
+        const { allowed } = await res.json();
+        if (!allowed) {
+          await signOut();
+          setUser(null);
+          setProfile(null);
+          setError('Access restricted. Your email is not on the allowlist.');
+          setLoading(false);
+          return;
+        }
+
         const token = await firebaseUser.getIdToken();
         document.cookie = `firebaseAuthToken=${token}; path=/; max-age=3600; SameSite=Lax`;
 

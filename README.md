@@ -245,3 +245,137 @@ The `/demo` route provides a standalone walkthrough of all 5 scenes, controlled 
 - **Role-based access** — Organizer and mentor routes are protected at both middleware and UI levels.
 - **Typed domain models** — `lib/types.ts` defines all interfaces that map directly to Firestore documents.
 - **Reusable UI components** — `GlowCard`, `ArcadeButton`, `Modal`, `Terminal` are generic and composable.
+
+## Deployment Guide
+
+This guide covers deploying Hackade Platform to a clean GCP project with Cloud Run.
+
+### Prerequisites
+
+- Node.js 20+, npm or pnpm
+- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`)
+- [Firebase CLI](https://firebase.google.com/docs/cli) (`npm install -g firebase-tools`)
+- Docker (for building the Cloud Run container image)
+
+### Step 1: Create GCP Project & Enable APIs
+
+```bash
+# Create a new GCP project (or use an existing one)
+gcloud projects create <project-id> --name="Hackade Platform"
+gcloud config set project <project-id>
+
+# Enable billing (required for Cloud Run)
+# Visit https://console.cloud.google.com/billing and link a billing account
+
+# Enable required APIs
+gcloud services enable firestore.googleapis.com
+gcloud services enable run.googleapis.com
+gcloud services enable artifactregistry.googleapis.com
+```
+
+### Step 2: Set Up Firebase
+
+```bash
+# Add Firebase to your GCP project
+firebase projects:addfirebase <project-id>
+
+# Log in to Firebase CLI
+firebase login
+
+# Create Firestore database
+firebase firestore:databases:create --location=us-central1 --project=<project-id>
+```
+
+Then in the [Firebase Console](https://console.firebase.google.com):
+
+1. Go to **Authentication** > **Sign-in method** > Enable **Google** provider
+2. Go to **Authentication** > **Settings** > **Authorized domains** > Add your Cloud Run domain (after deploying)
+3. Go to **Project Settings** > **General** > **Your apps** > Add a **Web app** to get your Firebase config values
+
+### Step 3: Configure Environment Variables
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in `.env.local` with values from Firebase Console > Project Settings > Web App:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+```
+
+For **local development**, also set `FIREBASE_SERVICE_ACCOUNT_KEY` to a service account key JSON (create one in Firebase Console > Project Settings > Service accounts > Generate new private key). On **Cloud Run**, this is not needed -- Application Default Credentials are used automatically.
+
+### Step 4: Deploy Firestore Rules & Indexes
+
+```bash
+firebase use <project-id>
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+```
+
+This deploys `firestore.rules` and the composite indexes defined in `firestore.indexes.json`.
+
+### Step 5: Seed Initial Data (Optional)
+
+For development, seed sample quests by running the app locally and hitting the seed endpoint:
+
+```bash
+npm run dev
+# In another terminal:
+curl http://localhost:3000/api/seed
+```
+
+This is a dev-only route. Alternatively, create quest documents directly in the [Firestore Console](https://console.firebase.google.com/project/_/firestore).
+
+### Step 6: Promote First Organizer
+
+1. Sign in to the app once as a regular user (this creates your hacker profile in Firestore)
+2. In the [Firestore Console](https://console.firebase.google.com/project/_/firestore), find your user document in the `users` collection
+3. Edit the `role` field from `"hacker"` to `"organizer"`
+
+You can also use the Firebase Admin SDK or Cloud Shell:
+
+```bash
+# From Cloud Shell or a local script with admin credentials
+node -e "
+const admin = require('firebase-admin');
+admin.initializeApp();
+admin.firestore().collection('users').doc('<your-uid>').update({ role: 'organizer' });
+"
+```
+
+### Step 7: Build & Deploy to Cloud Run
+
+```bash
+# Create an Artifact Registry repository
+gcloud artifacts repositories create hackade --repository-format=docker --location=us-central1
+
+# Build the Docker image
+docker build -t hackade-platform .
+
+# Tag and push to Artifact Registry
+docker tag hackade-platform us-central1-docker.pkg.dev/<project-id>/hackade/hackade-platform:latest
+docker push us-central1-docker.pkg.dev/<project-id>/hackade/hackade-platform:latest
+
+# Deploy to Cloud Run
+gcloud run deploy hackade-platform \
+  --image us-central1-docker.pkg.dev/<project-id>/hackade/hackade-platform:latest \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars "NEXT_PUBLIC_FIREBASE_API_KEY=...,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...,NEXT_PUBLIC_FIREBASE_PROJECT_ID=...,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...,NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...,NEXT_PUBLIC_FIREBASE_APP_ID=..."
+```
+
+After deploying, copy the Cloud Run service URL and add it as an **authorized domain** in Firebase Console > Authentication > Settings > Authorized domains.
+
+### Step 8: Verify
+
+1. Visit the Cloud Run service URL
+2. Sign in with Google
+3. Browse `/quests` to confirm Firestore connectivity
+4. After promoting your user to organizer (Step 6), visit `/organizer` to confirm the dashboard loads
