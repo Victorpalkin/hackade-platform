@@ -1,4 +1,4 @@
-import { Quest, ProjectCard, TeamMember, ProvisioningItem, Submission } from './types';
+import { Quest, ProjectCard, TeamMember, ProvisioningItem, Submission, HackerProfile } from './types';
 
 export const quests: Quest[] = [
   {
@@ -115,6 +115,48 @@ export const mockSubmission: Submission = {
     'A virtual pet powered by Gemini that learns your habits and evolves. Built with Next.js, Google Cloud, and Gemini Pro Vision.',
   teamMembers: ['You (API Whisperer)', 'Maya (Pixel Pusher)', 'Jordan (Demo God)'],
 };
+
+export const linkedInProfile: HackerProfile = {
+  name: 'Alex Chen',
+  title: 'Senior Full-Stack Engineer',
+  skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AI/ML', 'Google Cloud', 'Gemini API'],
+  bio: 'Passionate builder who loves turning wild ideas into working prototypes. 3x hackathon winner. Currently exploring the intersection of AI and developer tools.',
+};
+
+export const mercenaryCards: ProjectCard[] = [
+  {
+    id: 'm1',
+    title: 'Carbon Footprint Tracker',
+    description: 'Real-time carbon emissions dashboard using Google Earth Engine data. Needs a frontend wizard to make the data sing.',
+    lookingFor: ['React Dev', 'Data Viz'],
+    tags: ['Sustainability', 'Maps', 'Data Viz'],
+    founder: { name: 'Priya', avatar: 'P' },
+  },
+  {
+    id: 'm2',
+    title: 'AccessiLens',
+    description: 'Chrome extension that uses Gemini Vision to analyze web pages and suggest accessibility improvements in real-time.',
+    lookingFor: ['ML Engineer', 'Chrome Extension Dev'],
+    tags: ['A11y', 'AI/ML', 'Chrome Extension'],
+    founder: { name: 'Sam', avatar: 'S' },
+  },
+  {
+    id: 'm3',
+    title: 'FinBot Advisor',
+    description: 'AI-powered personal finance chatbot built on Gemini that provides contextual money advice based on spending patterns.',
+    lookingFor: ['Full-Stack Dev', 'AI Engineer'],
+    tags: ['AI/ML', 'Gemini', 'FinTech'],
+    founder: { name: 'Kai', avatar: 'K' },
+  },
+  {
+    id: 'm4',
+    title: 'EcoRoute Navigator',
+    description: 'Sustainable route planner that optimizes for lowest carbon emissions using Maps API and real-time transit data.',
+    lookingFor: ['Backend Dev', 'Maps API'],
+    tags: ['Sustainability', 'Maps', 'Google Cloud'],
+    founder: { name: 'Zara', avatar: 'Z' },
+  },
+];
 
 export const vibeCodingLines = [
   '$ gemini scaffold "add a dark-mode user dashboard"',

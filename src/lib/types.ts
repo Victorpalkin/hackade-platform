@@ -46,7 +46,14 @@ export interface Submission {
   teamMembers: string[];
 }
 
-export type SceneId = 1 | 2 | 3 | 4 | 5;
+export interface HackerProfile {
+  name: string;
+  title: string;
+  skills: string[];
+  bio: string;
+}
+
+export type SceneId = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface DemoState {
   currentScene: SceneId;

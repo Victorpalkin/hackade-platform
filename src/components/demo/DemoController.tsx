@@ -3,27 +3,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneId } from '@/lib/types';
+import { ProfileSetup } from '@/components/scenes/Scene0/ProfileSetup';
 import { CampaignMap } from '@/components/scenes/Scene1/CampaignMap';
 import { SwipeCards } from '@/components/scenes/Scene1/SwipeCards';
+import { MercenaryBoard } from '@/components/scenes/Scene1/MercenaryBoard';
 import { MatchReveal } from '@/components/scenes/Scene1/MatchReveal';
 import { CharacterSelect } from '@/components/scenes/Scene2/CharacterSelect';
 import { WarRoom } from '@/components/scenes/Scene3/WarRoom';
 import { SafetyNet } from '@/components/scenes/Scene4/SafetyNet';
 import { DeployFlow } from '@/components/scenes/Scene5/DeployFlow';
 
-type Scene1Phase = 'map' | 'swipe' | 'match';
+type Scene1Phase = 'map' | 'swipe' | 'mercenary' | 'match';
 
 export function DemoController() {
-  const [currentScene, setCurrentScene] = useState<SceneId>(1);
+  const [currentScene, setCurrentScene] = useState<SceneId>(0);
   const [scene1Phase, setScene1Phase] = useState<Scene1Phase>('map');
 
   const advanceScene = useCallback(() => {
+    if (currentScene === 0) {
+      setCurrentScene(1);
+      return;
+    }
     if (currentScene === 1) {
       if (scene1Phase === 'map') {
         setScene1Phase('swipe');
         return;
       }
-      if (scene1Phase === 'swipe') {
+      if (scene1Phase === 'swipe' || scene1Phase === 'mercenary') {
         setScene1Phase('match');
         return;
       }
@@ -43,7 +49,14 @@ export function DemoController() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [advanceScene]);
 
-  const sceneKey = currentScene === 1 ? `scene-1-${scene1Phase}` : `scene-${currentScene}`;
+  const sceneKey =
+    currentScene === 0
+      ? 'scene-0'
+      : currentScene === 1
+        ? `scene-1-${scene1Phase}`
+        : `scene-${currentScene}`;
+
+  const sceneDots: SceneId[] = [0, 1, 2, 3, 4, 5];
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -56,11 +69,20 @@ export function DemoController() {
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="w-full h-full"
         >
+          {currentScene === 0 && (
+            <ProfileSetup onComplete={() => setCurrentScene(1)} />
+          )}
           {currentScene === 1 && scene1Phase === 'map' && (
-            <CampaignMap onSelectQuest={() => setScene1Phase('swipe')} />
+            <CampaignMap
+              onSelectQuest={() => setScene1Phase('swipe')}
+              onMercenary={() => setScene1Phase('mercenary')}
+            />
           )}
           {currentScene === 1 && scene1Phase === 'swipe' && (
             <SwipeCards onMatch={() => setScene1Phase('match')} />
+          )}
+          {currentScene === 1 && scene1Phase === 'mercenary' && (
+            <MercenaryBoard onMatch={() => setScene1Phase('match')} />
           )}
           {currentScene === 1 && scene1Phase === 'match' && (
             <MatchReveal onContinue={() => setCurrentScene(2)} />
@@ -80,7 +102,7 @@ export function DemoController() {
 
       {/* Scene indicator dots */}
       <div className="fixed bottom-4 right-4 flex gap-2 z-50">
-        {([1, 2, 3, 4, 5] as SceneId[]).map((scene) => (
+        {sceneDots.map((scene) => (
           <button
             key={scene}
             onClick={() => {
@@ -92,7 +114,7 @@ export function DemoController() {
                 ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.6)]'
                 : 'bg-white/20 hover:bg-white/40'
             }`}
-            title={`Scene ${scene}`}
+            title={scene === 0 ? 'Profile' : `Scene ${scene}`}
           />
         ))}
       </div>

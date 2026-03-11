@@ -14,9 +14,10 @@ const iconMap: Record<string, React.ReactNode> = {
 
 interface CampaignMapProps {
   onSelectQuest: () => void;
+  onMercenary: () => void;
 }
 
-export function CampaignMap({ onSelectQuest }: CampaignMapProps) {
+export function CampaignMap({ onSelectQuest, onMercenary }: CampaignMapProps) {
   const { quests } = useQuests();
 
   return (
@@ -73,12 +74,12 @@ export function CampaignMap({ onSelectQuest }: CampaignMapProps) {
 
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
       >
-        <ArcadeButton variant="magenta" size="sm" disabled>
+        <ArcadeButton variant="magenta" size="sm" onClick={onMercenary}>
           <Swords size={16} className="inline mr-2" />
-          Mercenary Mode (Coming Soon)
+          Mercenary Mode
         </ArcadeButton>
       </motion.div>
     </div>
