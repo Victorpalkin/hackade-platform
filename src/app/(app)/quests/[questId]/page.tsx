@@ -155,7 +155,7 @@ export default function QuestDetailPage() {
                 <p className="text-xs uppercase tracking-wider text-fuchsia-400 mb-1">My Project</p>
                 <h3 className="text-xl font-bold">{myProject.title}</h3>
                 <p className="text-sm text-gray-400 mt-1">
-                  {myProject.members.length} member{myProject.members.length !== 1 ? 's' : ''}
+                  {myProject.members?.length ?? 0} member{myProject.members?.length !== 1 ? 's' : ''}
                 </p>
               </div>
               <div className="flex gap-3">

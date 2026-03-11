@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneId } from '@/lib/types';
+import { quests, projectCards, teamMembers } from '@/lib/mock-data';
 import { CampaignMap } from '@/components/scenes/Scene1/CampaignMap';
 import { SwipeCards } from '@/components/scenes/Scene1/SwipeCards';
 import { MatchReveal } from '@/components/scenes/Scene1/MatchReveal';
@@ -57,16 +58,16 @@ export function DemoController() {
           className="w-full h-full"
         >
           {currentScene === 1 && scene1Phase === 'map' && (
-            <CampaignMap onSelectQuest={() => setScene1Phase('swipe')} />
+            <CampaignMap onSelectQuest={() => setScene1Phase('swipe')} quests={quests} />
           )}
           {currentScene === 1 && scene1Phase === 'swipe' && (
-            <SwipeCards onMatch={() => setScene1Phase('match')} />
+            <SwipeCards onMatch={() => setScene1Phase('match')} cards={projectCards} />
           )}
           {currentScene === 1 && scene1Phase === 'match' && (
             <MatchReveal onContinue={() => setCurrentScene(2)} />
           )}
           {currentScene === 2 && (
-            <CharacterSelect onReady={() => setCurrentScene(3)} />
+            <CharacterSelect onReady={() => setCurrentScene(3)} members={teamMembers} />
           )}
           {currentScene === 3 && (
             <WarRoom onReady={() => setCurrentScene(4)} />

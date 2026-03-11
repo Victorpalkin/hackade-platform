@@ -1,15 +1,30 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { ThumbsUp, ThumbsDown, Users, Tag } from 'lucide-react';
 import { useMatching } from '@/lib/hooks/use-matching';
+import type { Project } from '@/lib/types';
 
 interface SwipeCardsProps {
   onMatch: () => void;
+  cards?: Project[];
 }
 
-export function SwipeCards({ onMatch }: SwipeCardsProps) {
-  const { cards, currentIndex, swipe } = useMatching();
+export function SwipeCards({ onMatch, cards: cardsProp }: SwipeCardsProps) {
+  const matching = cardsProp ? null : useMatching();
+  const [localIndex, setLocalIndex] = useState(0);
+
+  const cards = cardsProp ?? matching?.cards ?? [];
+  const currentIndex = cardsProp ? localIndex : matching?.currentIndex ?? 0;
+  const swipe = useCallback((dir: 'left' | 'right') => {
+    if (cardsProp) {
+      setLocalIndex((i) => i + 1);
+    } else {
+      matching?.swipe(dir);
+    }
+  }, [cardsProp, matching]);
+
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);

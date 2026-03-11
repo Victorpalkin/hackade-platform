@@ -1,10 +1,12 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Code2, Palette, Presentation, ArrowRight, Check } from 'lucide-react';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { useTeam } from '@/lib/hooks/use-team';
+import type { TeamMember } from '@/lib/types';
 
 const roleIcons: Record<string, React.ReactNode> = {
   'API Whisperer': <Code2 size={32} />,
@@ -20,17 +22,28 @@ const roleColors: Record<string, 'cyan' | 'magenta' | 'green'> = {
 
 interface CharacterSelectProps {
   onReady: () => void;
+  members?: TeamMember[];
 }
 
-export function CharacterSelect({ onReady }: CharacterSelectProps) {
-  const { members, claimRole, autoFillRemaining, allClaimed } = useTeam();
+export function CharacterSelect({ onReady, members: membersProp }: CharacterSelectProps) {
+  const team = membersProp ? null : useTeam();
+  const [localMembers, setLocalMembers] = useState<TeamMember[]>(membersProp ?? []);
 
-  const handleClaim = (memberId: string) => {
-    claimRole(memberId);
-    setTimeout(() => {
-      autoFillRemaining();
-    }, 600);
-  };
+  const members = membersProp ? localMembers : team?.members ?? [];
+  const allClaimed = members.every((m) => m.claimed);
+
+  const handleClaim = useCallback((memberId: string) => {
+    if (membersProp) {
+      setLocalMembers((prev) =>
+        prev.map((m) => ({ ...m, claimed: true, name: m.id === memberId ? 'You' : m.name }))
+      );
+    } else {
+      team?.claimRole(memberId);
+      setTimeout(() => {
+        team?.autoFillRemaining();
+      }, 600);
+    }
+  }, [membersProp, team]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 grid-bg">

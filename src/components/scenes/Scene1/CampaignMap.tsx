@@ -5,6 +5,7 @@ import { Brain, Leaf, Eye, Swords } from 'lucide-react';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { useQuests } from '@/lib/hooks/use-quests';
+import type { Quest } from '@/lib/types';
 
 const iconMap: Record<string, React.ReactNode> = {
   Brain: <Brain size={24} />,
@@ -14,10 +15,12 @@ const iconMap: Record<string, React.ReactNode> = {
 
 interface CampaignMapProps {
   onSelectQuest: () => void;
+  quests?: Quest[];
 }
 
-export function CampaignMap({ onSelectQuest }: CampaignMapProps) {
-  const { quests } = useQuests();
+export function CampaignMap({ onSelectQuest, quests: questsProp }: CampaignMapProps) {
+  const { quests: questsFromHook } = useQuests();
+  const quests = questsProp ?? questsFromHook;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 grid-bg relative">
