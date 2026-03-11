@@ -134,11 +134,11 @@ export const mercenaryCards: ProjectCard[] = [
   },
   {
     id: 'm2',
-    title: 'AccessiLens',
-    description: 'Chrome extension that uses Gemini Vision to analyze web pages and suggest accessibility improvements in real-time.',
-    lookingFor: ['ML Engineer', 'Chrome Extension Dev'],
-    tags: ['A11y', 'AI/ML', 'Chrome Extension'],
-    founder: { name: 'Sam', avatar: 'S' },
+    title: 'AI-Powered Tamagotchi',
+    description: 'A virtual pet powered by Gemini that learns your habits and evolves. Feed it data, watch it grow!',
+    lookingFor: ['ML Engineer', 'React Dev'],
+    tags: ['AI/ML', 'Gemini', 'Fun'],
+    founder: { name: 'Alice', avatar: 'A' },
   },
   {
     id: 'm3',
