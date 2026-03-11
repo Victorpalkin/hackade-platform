@@ -10,7 +10,6 @@ import { projectsCollection } from '@/lib/firebase/collections';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { quests as mockQuests } from '@/lib/mock-data';
 import type { Quest, Project } from '@/lib/types';
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -42,15 +41,9 @@ export default function QuestDetailPage() {
       .then((snap) => {
         if (snap.exists()) {
           setQuest({ id: snap.id, ...snap.data() } as Quest);
-        } else {
-          const mock = mockQuests.find((q) => q.id === questId);
-          if (mock) setQuest(mock);
         }
       })
-      .catch(() => {
-        const mock = mockQuests.find((q) => q.id === questId);
-        if (mock) setQuest(mock);
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
 
     // Count projects in this quest

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { onSnapshot } from 'firebase/firestore';
 import { Quest } from '../types';
 import { questsCollection } from '../firebase/collections';
-import { quests as mockQuests } from '../mock-data';
 
 export function useQuests() {
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -16,13 +15,11 @@ export function useQuests() {
       questsCollection,
       (snapshot) => {
         const data = snapshot.docs.map((doc) => doc.data());
-        // Fall back to mock data if Firestore is empty / not configured
-        setQuests(data.length > 0 ? data : mockQuests);
+        setQuests(data);
         setLoading(false);
       },
       () => {
-        // On error (e.g. no Firebase config), use mock data
-        setQuests(mockQuests);
+        setQuests([]);
         setLoading(false);
       }
     );

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Gamepad2, Loader2 } from 'lucide-react';
 import { ArcadeButton } from '@/components/ui/ArcadeButton';
@@ -72,14 +73,19 @@ export default function LoginPage() {
           </motion.p>
         )}
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
           transition={{ delay: 1 }}
-          className="text-xs text-gray-600 mt-6"
+          className="mt-6 space-y-2"
         >
-          Sign in to browse quests, build teams, and ship projects
-        </motion.p>
+          <p className="text-xs text-gray-600">
+            Sign in to browse quests, build teams, and ship projects
+          </p>
+          <Link href="/demo" className="text-xs text-cyan-500 hover:text-cyan-400 transition-colors">
+            Or try the demo
+          </Link>
+        </motion.div>
       </motion.div>
     </div>
   );

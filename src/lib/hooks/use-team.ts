@@ -5,19 +5,16 @@ import { doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase/client';
 import { TeamMember, Project } from '../types';
 import { useAuth } from './use-auth';
-import { teamMembers as mockMembers } from '../mock-data';
 
 export function useTeam(teamId?: string) {
   const { user } = useAuth();
   const [team, setTeam] = useState<Project | null>(null);
-  const [members, setMembers] = useState<TeamMember[]>(
-    mockMembers.map((m) => ({ ...m, claimed: false }))
-  );
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!teamId) {
-      setMembers(mockMembers.map((m) => ({ ...m, claimed: false })));
+      setMembers([]);
       setLoading(false);
       return;
     }

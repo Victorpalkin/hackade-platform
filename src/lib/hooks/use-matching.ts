@@ -8,7 +8,6 @@ import { Project, SwipeRecord, Notification } from '../types';
 import { projectsCollection, swipesCollection } from '../firebase/collections';
 import { db } from '../firebase/client';
 import { useAuth } from './use-auth';
-import { projectCards as mockCards } from '../mock-data';
 
 export function useMatching(questId?: string) {
   const { user } = useAuth();
@@ -23,7 +22,7 @@ export function useMatching(questId?: string) {
 
   useEffect(() => {
     if (!questId || !user) {
-      setCards(mockCards);
+      setCards([]);
       setLoading(false);
       return;
     }
@@ -49,7 +48,7 @@ export function useMatching(questId?: string) {
         setLoading(false);
       },
       () => {
-        setCards(mockCards);
+        setCards([]);
         setLoading(false);
       }
     );
