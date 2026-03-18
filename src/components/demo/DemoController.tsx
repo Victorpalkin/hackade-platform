@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneId } from '@/lib/types';
 import { quests, projectCards, teamMembers } from '@/lib/mock-data';
+import { ProfileImport } from '@/components/scenes/Scene0/ProfileImport';
 import { CampaignMap } from '@/components/scenes/Scene1/CampaignMap';
 import { SwipeCards } from '@/components/scenes/Scene1/SwipeCards';
 import { MatchReveal } from '@/components/scenes/Scene1/MatchReveal';
@@ -15,7 +16,7 @@ import { DeployFlow } from '@/components/scenes/Scene5/DeployFlow';
 type Scene1Phase = 'map' | 'swipe' | 'match';
 
 export function DemoController() {
-  const [currentScene, setCurrentScene] = useState<SceneId>(1);
+  const [currentScene, setCurrentScene] = useState<SceneId>(0);
   const [scene1Phase, setScene1Phase] = useState<Scene1Phase>('map');
 
   const advanceScene = useCallback(() => {
@@ -57,6 +58,9 @@ export function DemoController() {
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="w-full h-full"
         >
+          {currentScene === 0 && (
+            <ProfileImport onContinue={() => setCurrentScene(1)} />
+          )}
           {currentScene === 1 && scene1Phase === 'map' && (
             <CampaignMap onSelectQuest={() => setScene1Phase('swipe')} quests={quests} />
           )}
@@ -81,7 +85,7 @@ export function DemoController() {
 
       {/* Scene indicator dots */}
       <div className="fixed bottom-4 right-4 flex gap-2 z-50">
-        {([1, 2, 3, 4, 5] as SceneId[]).map((scene) => (
+        {([0, 1, 2, 3, 4, 5] as SceneId[]).map((scene) => (
           <button
             key={scene}
             onClick={() => {

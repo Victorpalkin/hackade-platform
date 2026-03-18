@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { ThumbsUp, ThumbsDown, Users, Tag } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Users, Tag, RotateCcw } from 'lucide-react';
+import { ArcadeButton } from '@/components/ui/ArcadeButton';
 import { useMatching } from '@/lib/hooks/use-matching';
 import type { Project } from '@/lib/types';
 
@@ -42,7 +43,24 @@ export function SwipeCards({ onMatch, cards: cardsProp }: SwipeCardsProps) {
   };
 
   const card = cards[currentIndex];
-  if (!card) return null;
+  if (!card) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8 grid-bg">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <h2 className="text-2xl font-bold glow-text-cyan mb-4">All projects reviewed!</h2>
+          <p className="text-gray-400 mb-6">You&apos;ve seen all available projects. Want to take another look?</p>
+          <ArcadeButton variant="cyan" onClick={() => setLocalIndex(0)}>
+            <RotateCcw size={16} className="inline mr-2" />
+            Start Over
+          </ArcadeButton>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 grid-bg">

@@ -75,7 +75,7 @@ export function MatchReveal({ onContinue }: MatchRevealProps) {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            Y
+            SK
           </motion.div>
           <motion.div
             initial={{ scale: 0 }}

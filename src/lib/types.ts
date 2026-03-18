@@ -107,7 +107,7 @@ export interface Judgment {
   createdAt: number;
 }
 
-export type SceneId = 1 | 2 | 3 | 4 | 5;
+export type SceneId = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface DemoState {
   currentScene: SceneId;

@@ -35,7 +35,7 @@ export function CharacterSelect({ onReady, members: membersProp }: CharacterSele
   const handleClaim = useCallback((memberId: string) => {
     if (membersProp) {
       setLocalMembers((prev) =>
-        prev.map((m) => ({ ...m, claimed: true, name: m.id === memberId ? 'You' : m.name }))
+        prev.map((m) => ({ ...m, claimed: true, name: m.id === memberId ? 'Stanislava Kirova' : m.name }))
       );
     } else {
       team?.claimRole(memberId);

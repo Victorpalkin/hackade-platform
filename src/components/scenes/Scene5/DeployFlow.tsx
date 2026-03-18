@@ -149,7 +149,7 @@ export function DeployFlow({ submission, onSubmit }: DeployFlowProps) {
                   </div>
                   <div className="w-64 h-36 rounded-lg bg-gray-800 mb-3 flex items-center justify-center">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-fuchsia-500 flex items-center justify-center text-xl font-bold">
-                      Y
+                      SK
                     </div>
                   </div>
                   <p className="text-xs text-gray-500">Mock webcam preview</p>

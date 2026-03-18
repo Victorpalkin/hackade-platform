@@ -69,9 +69,9 @@ export const projectCards: Project[] = [
 export const teamMembers: TeamMember[] = [
   {
     id: 't1',
-    name: 'You',
+    name: 'Stanislava Kirova',
     role: 'API Whisperer',
-    avatar: 'Y',
+    avatar: 'SK',
     skills: ['React', 'TypeScript', 'APIs'],
     claimed: false,
   },
@@ -127,7 +127,7 @@ export const mockSubmission: Submission = {
   tracks: ['Google Finance AI Agents', 'Best Use of Gemini API'],
   description:
     'A virtual pet powered by Gemini that learns your habits and evolves. Built with Next.js, Google Cloud, and Gemini Pro Vision.',
-  teamMembers: ['You (API Whisperer)', 'Maya (Pixel Pusher)', 'Jordan (Demo God)'],
+  teamMembers: ['Stanislava Kirova (API Whisperer)', 'Maya (Pixel Pusher)', 'Jordan (Demo God)'],
 };
 
 export const vibeCodingLines = [
