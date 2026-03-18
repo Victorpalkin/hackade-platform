@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LogOut, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -53,6 +55,14 @@ export function UserMenu() {
             <p className="text-sm font-medium truncate">{user.displayName}</p>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
           </div>
+          <button
+            role="menuitem"
+            onClick={() => { closeMenu(); router.push('/account'); }}
+            className="w-full px-4 py-2 text-sm text-left text-gray-400 hover:text-white hover:bg-white/5 flex items-center gap-2 cursor-pointer"
+          >
+            <User size={14} />
+            Account
+          </button>
           <button
             role="menuitem"
             onClick={() => { closeMenu(); signOut(); }}

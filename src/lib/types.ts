@@ -5,6 +5,9 @@ export interface UserProfile {
   email: string;
   photoURL: string;
   role: 'hacker' | 'organizer' | 'mentor';
+  bio?: string;
+  skills?: string[];
+  interests?: string[];
 }
 
 export interface Quest {
